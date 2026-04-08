@@ -1,0 +1,288 @@
+---
+title: "Modules"
+description: "How Gleam modules work: file structure, imports, public and private definitions, aliases, and internal modules."
+---
+
+Every `.gleam` file is a module. Modules are the unit of code organisation in Gleam. A module's name is derived from its file path within the `src/` directory.
+
+## Module names and file paths
+
+The module name mirrors the file path relative to `src/`, with slashes replacing directory separators and the `.gleam` extension removed.
+
+```
+src/
+  my_app.gleam          → module name: my_app
+  users/profile.gleam   → module name: users/profile
+  utils/string.gleam    → module name: utils/string
+```
+
+A project's entry point is conventionally a `main` function in the top-level source file:
+
+```gleam
+// src/my_app.gleam
+import gleam/io
+
+pub fn main() -> Nil {
+  io.println("Hello from my_app!")
+}
+```
+
+## Defining public and private items
+
+The `pub` keyword makes a definition visible to other modules. Without it, the definition is private to the current module.
+
+```gleam
+// Public — importable from other modules
+pub fn greet(name: String) -> String {
+  "Hello, " <> name <> "!"
+}
+
+pub type Color {
+  Red
+  Green
+  Blue
+}
+
+pub const max_connections = 100
+
+// Private — only usable within this module
+fn internal_helper(x: Int) -> Int {
+  x * 2
+}
+
+type InternalState {
+  InternalState(count: Int)
+}
+```
+
+<Note>
+`pub type` makes the type and its constructors public. `pub opaque type` makes the type public but hides its constructors. See [Custom types](/language/custom-types) for details.
+</Note>
+
+## Importing modules
+
+Use `import` to bring a module into scope. The last segment of the module path becomes the local name.
+
+```gleam
+import gleam/io
+import gleam/string
+import gleam/list
+import gleam/int
+
+pub fn main() -> Nil {
+  io.println("Hello!")
+  let upper = string.uppercase("gleam")
+  let nums = list.map([1, 2, 3], int.to_string)
+  io.println(upper)
+}
+```
+
+Calling a function uses `module_name.function_name`:
+
+```gleam
+io.println("Hello")
+string.length("gleam")
+list.filter([1, 2, 3], fn(n) { n > 1 })
+```
+
+## Selective imports
+
+Import specific values or types unqualified using `{ }`:
+
+```gleam
+import gleam/option.{type Option, None, Some}
+import gleam/list.{filter, map}
+
+pub fn process(items: List(Option(Int))) -> List(Int) {
+  items
+  |> filter(fn(item) { item != None })
+  |> map(fn(item) {
+    case item {
+      Some(n) -> n
+      None -> 0
+    }
+  })
+}
+```
+
+You can also selectively import types with `type`:
+
+```gleam
+import gleam/option.{type Option}
+import gleam/result.{type Result}
+```
+
+<Tip>
+Selective imports reduce visual noise for frequently used constructors like `Ok`, `Error`, `Some`, and `None`, while keeping less common functions qualified for clarity.
+</Tip>
+
+## Aliasing modules
+
+Use `as` to give a module a shorter or more convenient local name:
+
+```gleam
+import gleam/list as l
+import gleam/string as str
+import my_project/authentication as auth
+
+pub fn main() {
+  let names = l.map(["alice", "bob"], str.uppercase)
+  auth.verify_token("abc123")
+}
+```
+
+### Aliasing selective imports
+
+```gleam
+import gleam/option.{Some as Just, None as Nothing}
+
+let value = Just(42)
+let empty = Nothing
+```
+
+## Importing types
+
+Types must be imported explicitly when used in annotations. Values and types share import syntax:
+
+```gleam
+import gleam/option.{type Option, Some, None}
+
+pub fn wrap(x: Int) -> Option(Int) {
+  Some(x)
+}
+```
+
+Without the `type Option` import, using `Option` in an annotation would be a compile error.
+
+## Project structure
+
+A typical Gleam project follows this layout:
+
+```
+my_project/
+├── gleam.toml       # project configuration
+├── src/
+│   └── my_project.gleam
+└── test/
+    └── my_project_test.gleam
+```
+
+The `gleam.toml` file defines the project name, version, dependencies, and target:
+
+```toml
+name = "my_project"
+version = "1.0.0"
+
+[dependencies]
+gleam_stdlib = ">= 0.70.0 and < 2.0.0"
+
+[dev_dependencies]
+gleeunit = ">= 1.0.0 and < 2.0.0"
+```
+
+## The module hierarchy
+
+Sub-modules are created by placing files in sub-directories of `src/`. There is no explicit declaration — the file system is the hierarchy.
+
+```
+src/
+  app.gleam                 → app
+  app/
+    router.gleam            → app/router
+    middleware.gleam        → app/middleware
+    handlers/
+      users.gleam           → app/handlers/users
+      posts.gleam           → app/handlers/posts
+```
+
+Importing a sub-module:
+
+```gleam
+import app/router
+import app/handlers/users
+
+pub fn main() {
+  router.handle(users.routes())
+}
+```
+
+## Internal modules
+
+A module can be marked as internal, meaning it is accessible within the same package but not importable by external packages. Configure this in `gleam.toml` by listing the allowed modules in the `internal_modules` field:
+
+```toml
+name = "my_library"
+version = "1.0.0"
+
+internal_modules = [
+  "my_library/internal",
+  "my_library/internal/*",
+]
+
+[dependencies]
+gleam_stdlib = ">= 0.70.0 and < 2.0.0"
+```
+
+Definitions in an internal module can also be annotated with `@internal` for finer-grained control:
+
+```gleam
+// src/my_library/helpers.gleam
+@internal
+pub fn implementation_detail() -> Int {
+  42
+}
+
+pub fn public_api() -> Int {
+  implementation_detail()
+}
+```
+
+`@internal` functions are importable within the package but the compiler warns when they are used from an external package.
+
+## Re-exporting
+
+Gleam does not have a re-export syntax. To expose functionality from a sub-module under a cleaner public API, define wrapper functions in the public module:
+
+```gleam
+// src/my_library.gleam
+import my_library/internal/codec
+
+pub fn encode(value: String) -> BitArray {
+  codec.encode(value)
+}
+
+pub fn decode(bytes: BitArray) -> Result(String, String) {
+  codec.decode(bytes)
+}
+```
+
+## Standard library modules
+
+The Gleam standard library is split into modules by concern. Commonly used modules include:
+
+<AccordionGroup>
+  <Accordion title="gleam/io">
+    Console output: `io.println`, `io.print`, `io.debug`.
+  </Accordion>
+  <Accordion title="gleam/string">
+    String manipulation: `string.length`, `string.split`, `string.replace`, `string.uppercase`, `string.contains`.
+  </Accordion>
+  <Accordion title="gleam/list">
+    List operations: `list.map`, `list.filter`, `list.fold`, `list.sort`, `list.find`, `list.zip`.
+  </Accordion>
+  <Accordion title="gleam/result">
+    Result combinators: `result.map`, `result.try`, `result.unwrap`, `result.map_error`.
+  </Accordion>
+  <Accordion title="gleam/option">
+    Option type and combinators: `option.map`, `option.unwrap`, `option.from_result`.
+  </Accordion>
+  <Accordion title="gleam/int">
+    Integer utilities: `int.to_string`, `int.parse`, `int.max`, `int.min`, `int.absolute_value`.
+  </Accordion>
+  <Accordion title="gleam/float">
+    Float utilities: `float.to_string`, `float.parse`, `float.ceiling`, `float.floor`, `float.round`.
+  </Accordion>
+  <Accordion title="gleam/dict">
+    Hash map: `dict.new`, `dict.insert`, `dict.get`, `dict.delete`, `dict.map_values`.
+  </Accordion>
+</AccordionGroup>

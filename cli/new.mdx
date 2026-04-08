@@ -1,0 +1,75 @@
+---
+title: "gleam new"
+description: "Create a new Gleam project"
+---
+
+`gleam new` scaffolds a new Gleam project in the given directory, generating all the files needed to get started.
+
+## Usage
+
+```bash
+gleam new <project_root> [--name <name>] [--template erlang|javascript] [--skip-git] [--skip-github]
+```
+
+## Arguments
+
+| Argument | Description |
+|---|---|
+| `<project_root>` | Path to the directory to create the project in. The directory will be created if it does not exist. |
+
+## Flags
+
+| Flag | Description | Default |
+|---|---|---|
+| `--name <name>` | The name to use for the project. When omitted the name is derived from the project root directory name. | Derived from directory |
+| `--template <template>` | The project template to use: `erlang` or `javascript`. | `erlang` |
+| `--skip-git` | Skip git initialization and skip creation of `.gitignore`, `.git/`, and `.github/` files. | `false` |
+| `--skip-github` | Skip creation of `.github/` files only (keeps git initialization and `.gitignore`). | `false` |
+
+## Generated files
+
+Running `gleam new my_project` creates the following structure:
+
+```
+my_project/
+├── src/
+│   └── my_project.gleam    # Main module with a hello-world main function
+├── test/
+│   └── my_project_test.gleam  # Test module
+├── gleam.toml              # Project manifest
+├── README.md
+├── .gitignore
+└── .github/
+    └── workflows/
+        └── test.yml        # CI workflow that runs gleam test
+```
+
+## Examples
+
+Create a project with defaults:
+
+```bash
+gleam new my_project
+```
+
+Create a project targeting JavaScript:
+
+```bash
+gleam new my_project --template javascript
+```
+
+Create a project with an explicit name that differs from the directory:
+
+```bash
+gleam new packages/core --name my_core
+```
+
+Create a project without any git files:
+
+```bash
+gleam new my_project --skip-git
+```
+
+<Note>
+Project names must be valid Gleam identifiers: lowercase letters, digits, and underscores, starting with a letter.
+</Note>

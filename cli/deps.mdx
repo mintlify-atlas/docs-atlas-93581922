@@ -1,0 +1,127 @@
+---
+title: "gleam deps"
+description: "Manage project dependencies"
+---
+
+Gleam dependencies are declared in `gleam.toml` and resolved automatically whenever the project is built. The resolved versions are locked in `manifest.toml`.
+
+## gleam deps subcommands
+
+### gleam deps list
+
+Print all dependency packages and their resolved versions.
+
+```bash
+gleam deps list
+```
+
+### gleam deps download
+
+Download all dependency packages without building. Useful for pre-populating a cache in CI.
+
+```bash
+gleam deps download
+```
+
+### gleam deps outdated
+
+List all dependencies that have newer versions available on Hex.
+
+```bash
+gleam deps outdated
+```
+
+### gleam deps update
+
+Update one or more dependency packages to their latest versions compatible with the constraints in `gleam.toml`, then write the updated `manifest.toml`.
+
+```bash
+gleam deps update [packages...]
+```
+
+When no packages are given, all dependencies are updated.
+
+### gleam deps tree
+
+Print the full dependency tree for the project.
+
+```bash
+gleam deps tree [--package <name>] [--invert <name>]
+```
+
+| Flag | Short | Description |
+|---|---|---|
+| `--package <name>` | `-p` | Use this package as the root of the printed tree. Conflicts with `--invert`. |
+| `--invert <name>` | `-i` | Invert the tree direction and focus on the given package (shows what depends on it). Conflicts with `--package`. |
+
+## gleam add
+
+Add one or more Hex packages to `gleam.toml` and download them. The newest compatible version is selected automatically, and the version range written to `gleam.toml` permits future patch and minor updates.
+
+```bash
+gleam add <packages...> [--dev]
+```
+
+| Flag | Description | Default |
+|---|---|---|
+| `--dev` | Add the packages as dev-only dependencies (under `[dev_dependencies]`). | `false` |
+
+**Examples:**
+
+```bash
+# Add a single package
+gleam add gleam_http
+
+# Add a package at a specific major version
+gleam add gleam_http@1
+
+# Add a package at a specific version
+gleam add gleam_http@1.2.3
+
+# Add multiple packages
+gleam add gleam_http gleam_json
+
+# Add a package as a dev dependency
+gleam add --dev gleeunit
+```
+
+## gleam remove
+
+Remove one or more packages from `gleam.toml`.
+
+```bash
+gleam remove <packages...>
+```
+
+## gleam update
+
+Alias for `gleam deps update`. Updates one or more packages (or all packages when none are specified).
+
+```bash
+gleam update [packages...]
+```
+
+## Dependency version syntax
+
+Dependencies are specified in `gleam.toml` using the following formats:
+
+```toml
+[dependencies]
+# Version range
+gleam_stdlib = ">= 0.34.0 and < 2.0.0"
+
+# Range excluding a broken version
+gleam_stdlib = ">= 0.34.0 and < 2.0.0 and != 0.36.1"
+
+# Git dependency
+my_lib = { git = "https://github.com/example/my_lib.git", ref = "a8b3c5d82" }
+
+# Local path dependency
+my_lib = { path = "../my_lib" }
+```
+
+<Note>
+The `manifest.toml` file locks the resolved versions of all dependencies, making builds deterministic. Do not edit `manifest.toml` by hand.
+</Note>
+
+The `[dependencies]` section contains production dependencies. The `[dev_dependencies]` section contains packages used only during development and testing.

@@ -1,0 +1,267 @@
+---
+title: "Language basics"
+description: "Variables, primitive types, operators, comments, and core expressions in Gleam."
+---
+
+Gleam is a statically typed functional language that compiles to Erlang and JavaScript. This page covers the foundational building blocks you will use in every Gleam program.
+
+## Variables
+
+Variables are bound with `let`. All bindings are immutable — once a name is bound to a value, that value cannot be changed. You can, however, shadow a name by creating a new binding with the same name.
+
+```gleam
+pub fn main() {
+  let name = "Joe"
+  let age = 42
+  let is_admin = True
+
+  // Shadowing — `name` now refers to a new binding
+  let name = "Mike"
+  name
+}
+```
+
+<Note>
+Gleam does not have mutable variables. If you need to produce a different value, use a new binding or pass state through function arguments.
+</Note>
+
+### Constants
+
+Module-level constants are defined with `const`. They must be literals or expressions of other constants.
+
+```gleam
+pub const max_retries = 3
+pub const service_name = "auth"
+pub const default_tags = ["gleam", "functional"]
+pub const all_tags = ["compiled", ..default_tags]
+```
+
+## Basic types
+
+### Int
+
+Integers are arbitrary precision. Underscores can be used as separators for readability.
+
+```gleam
+let small = 42
+let large = 1_000_000
+let negative = -7
+let hex = 0xFF
+let octal = 0o77
+let binary = 0b1010
+```
+
+### Float
+
+Floats always require a decimal point.
+
+```gleam
+let pi = 3.14159
+let tiny = 1.0e-6
+let negative = -0.5
+```
+
+### String
+
+Strings are UTF-8 encoded. Use double quotes.
+
+```gleam
+let greeting = "Hello, world!"
+let multiline = "line one
+line two"
+let with_escape = "tab:\there"
+```
+
+### Bool
+
+```gleam
+let yes = True
+let no = False
+```
+
+### Nil
+
+`Nil` is the unit type. Functions that produce no meaningful value return `Nil`.
+
+```gleam
+let nothing: Nil = Nil
+```
+
+## Operators
+
+### Integer arithmetic
+
+Integer operators only work with `Int` values. Using them with floats is a compile error.
+
+```gleam
+let sum = 10 + 3       // 13
+let diff = 10 - 3      // 7
+let product = 10 * 3   // 30
+let quotient = 10 / 3  // 3  (integer division truncates)
+let remainder = 10 % 3 // 1
+```
+
+### Float arithmetic
+
+Float operators are suffixed with `.` and only work with `Float` values.
+
+```gleam
+let sum = 1.5 +. 2.5    // 4.0
+let diff = 5.0 -. 1.25  // 3.75
+let product = 2.0 *. 3.0 // 6.0
+let quotient = 7.0 /. 2.0 // 3.5
+```
+
+<Warning>
+Integer and float operators are distinct in Gleam. `1 + 1.0` is a type error. Use `1 + 1` for integers and `1.0 +. 1.0` for floats.
+</Warning>
+
+### Comparison
+
+```gleam
+// Integer comparisons
+let a = 1 == 1   // True
+let b = 1 != 2   // True
+let c = 1 < 2    // True
+let d = 2 >= 1   // True
+
+// Float comparisons use the dot suffix
+let e = 1.0 <. 2.0   // True
+let f = 3.0 >=. 2.5  // True
+```
+
+### Boolean logic
+
+```gleam
+let both = True && False  // False
+let either = True || False // True
+let negated = !True        // False
+```
+
+### String concatenation
+
+Strings are concatenated with `<>`.
+
+```gleam
+let name = "Joe"
+let greeting = "Hello, " <> name <> "!"
+// "Hello, Joe!"
+```
+
+## Comments
+
+Line comments start with `//`. Gleam has no block comments.
+
+```gleam
+// This is a comment
+let x = 1 // inline comment
+
+/// Documentation comments use three slashes.
+/// They appear in generated HTML docs.
+pub fn add(a: Int, b: Int) -> Int {
+  a + b
+}
+```
+
+## The `todo` and `panic` expressions
+
+`todo` marks code that has not been written yet. The compiler accepts it but the program panics at runtime if execution reaches it. It is useful when stubbing out a function signature.
+
+```gleam
+pub fn process(input: String) -> Int {
+  todo
+}
+```
+
+`panic` immediately terminates the program with an error. Use it to assert that a code path should be unreachable.
+
+```gleam
+pub fn expect_positive(n: Int) -> Int {
+  case n > 0 {
+    True -> n
+    False -> panic as "expected a positive integer"
+  }
+}
+```
+
+Both accept an optional message with `as`:
+
+```gleam
+todo as "implement fee calculation"
+panic as "this branch should never be reached"
+```
+
+## The pipe operator
+
+The pipe operator `|>` passes the result of the left-hand expression as the first argument to the right-hand function. It is the primary way to write readable sequential transformations.
+
+```gleam
+import gleam/string
+import gleam/list
+
+pub fn process_names(names: List(String)) -> List(String) {
+  names
+  |> list.map(string.uppercase)
+  |> list.filter(fn(name) { string.length(name) > 3 })
+  |> list.sort(string.compare)
+}
+```
+
+The pipe inserts the value as the first argument. If a different position is required, use a capture with `_`:
+
+```gleam
+// Pipe as second argument
+"hello world"
+|> string.replace("world", _)
+// equivalent to: string.replace("hello world", "world", _)
+```
+
+## The `use` expression
+
+`use` is syntactic sugar for callback-based code. When functions accept a continuation as their final argument, `use` flattens the nesting.
+
+Without `use`:
+
+```gleam
+import gleam/result
+
+pub fn process(input: String) -> Result(String, String) {
+  result.try(parse(input), fn(parsed) {
+    result.try(validate(parsed), fn(valid) {
+      result.map(transform(valid), fn(output) {
+        output
+      })
+    })
+  })
+}
+```
+
+With `use`:
+
+```gleam
+import gleam/result
+
+pub fn process(input: String) -> Result(String, String) {
+  use parsed <- result.try(parse(input))
+  use valid <- result.try(validate(parsed))
+  use output <- result.map(transform(valid))
+  output
+}
+```
+
+`use` binds the callback argument on the left of `<-` and the rest of the block becomes the callback body. See [Functions](/language/functions) for more details.
+
+## Blocks
+
+A block is a sequence of expressions wrapped in `{ }`. The block evaluates to the last expression.
+
+```gleam
+let result = {
+  let x = 10
+  let y = 20
+  x + y
+}
+// result == 30
+```
+
+Blocks are expressions and can appear anywhere a value is expected.

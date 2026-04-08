@@ -1,0 +1,107 @@
+---
+title: "gleam docs"
+description: "Build and publish HTML documentation"
+---
+
+`gleam docs` builds and publishes HTML documentation for your Gleam package. Documentation is generated from doc comments in your source code and published to [HexDocs](https://hexdocs.pm).
+
+## gleam docs build
+
+Render HTML documentation locally.
+
+```bash
+gleam docs build [--open] [--target erlang|javascript]
+```
+
+| Flag | Short | Description | Default |
+|---|---|---|---|
+| `--open` | | Open the generated docs in your default browser after building. | `false` |
+| `--target <target>` | `-t` | The compilation target to use when building docs. | `erlang` |
+
+The generated HTML is written to `build/dev/docs/<package>/`.
+
+**Example:**
+
+```bash
+# Build and immediately open in the browser
+gleam docs build --open
+```
+
+## gleam docs publish
+
+Publish HTML documentation to [HexDocs](https://hexdocs.pm). The package must already be published to Hex.
+
+```bash
+gleam docs publish
+```
+
+Authentication uses the `HEXPM_API_KEY` environment variable if set; otherwise the CLI prompts for credentials.
+
+```bash
+export HEXPM_API_KEY=your_hex_api_key
+gleam docs publish
+```
+
+## gleam docs remove
+
+Remove a specific version of your documentation from HexDocs.
+
+```bash
+gleam docs remove --package <name> --version <version>
+```
+
+| Flag | Description |
+|---|---|
+| `--package <name>` | The name of the package whose docs to remove. |
+| `--version <version>` | The version of the docs to remove. |
+
+Uses `HEXPM_API_KEY` if set.
+
+## Configuring documentation via gleam.toml
+
+Several `gleam.toml` fields influence the generated documentation.
+
+### Repository link
+
+Adds a source link to the sidebar and "view source" links for documented types and values.
+
+```toml
+repository = { type = "github", user = "myuser", repo = "my_package" }
+```
+
+Supported `type` values: `"github"`, `"gitlab"`, `"bitbucket"`, `"forgejo"`, `"gitea"`, `"sourcehut"`.
+
+### Sidebar links
+
+Add extra links to the sidebar:
+
+```toml
+links = [
+  { title = "Home page", href = "https://example.com" },
+  { title = "Changelog", href = "https://example.com/changelog" },
+]
+```
+
+### Additional documentation pages
+
+Include custom Markdown pages in the generated docs:
+
+```toml
+[documentation]
+pages = [
+  { title = "Migrating from v1", path = "migration.html", source = "./guides/migration.md" },
+  { title = "Architecture", path = "architecture.html", source = "./guides/architecture.md" },
+]
+```
+
+Each entry in `pages` requires:
+
+| Key | Description |
+|---|---|
+| `title` | The title shown in the sidebar. |
+| `path` | The output filename relative to the docs root (must end in `.html`). |
+| `source` | Path to the Markdown source file, relative to `gleam.toml`. |
+
+<Tip>
+Run `gleam docs build --open` during development to preview your documentation in the browser before publishing.
+</Tip>

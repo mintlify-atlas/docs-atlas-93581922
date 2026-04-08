@@ -1,24 +1,11 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "name": "Gleam",
+  "projectType": "cli-tool",
+  "projectName": "Gleam",
+  "projectDescription": "A friendly, statically-typed programming language that compiles to Erlang and JavaScript, designed for building type-safe, scalable systems.",
   "theme": "palm",
-  "colors": {
-    "primary": "#f4b2ee",
-    "light": "#7c5478",
-    "dark": "#231b23"
-  },
-  "favicon": "https://media.brand.dev/fce2b600-e85a-4e4c-8162-8fcc45ef79b5.jpg",
-  "navbar": {
-    "primary": {
-      "type": "github",
-      "href": "https://github.com/gleam-lang/gleam"
-    }
-  },
-  "footer": {
-    "socials": {
-      "github": "https://github.com/gleam-lang/gleam"
-    }
-  },
+  "primaryColor": "#f4b2ee",
+  "lightColor": "#7c5478",
+  "darkColor": "#231b23",
   "navigation": {
     "tabs": [
       {
@@ -84,5 +71,36 @@
         ]
       }
     ]
-  }
+  },
+  "keyFeatures": [
+    "Strong static type system with full type inference",
+    "Compiles to Erlang (BEAM VM) and JavaScript",
+    "Friendly, readable error messages",
+    "Built-in formatter and language server (LSP)",
+    "Seamless interop with Erlang/Elixir and JavaScript ecosystems",
+    "Package manager integrated with Hex.pm",
+    "Immutable data and functional programming patterns",
+    "Pattern matching and custom types",
+    "No null values or runtime type errors"
+  ],
+  "publicApiSurface": [
+    "gleam new <project>",
+    "gleam build [--target erlang|javascript]",
+    "gleam run [--target] [--module]",
+    "gleam test [--target] [--runtime]",
+    "gleam check",
+    "gleam format [--check]",
+    "gleam fix",
+    "gleam add <package> [--dev]",
+    "gleam remove <package>",
+    "gleam deps list|download|outdated|update|tree",
+    "gleam publish [--replace] [-y]",
+    "gleam docs build|publish|remove",
+    "gleam export erlang-shipment|hex-tarball|javascript-prelude|typescript-prelude|package-interface",
+    "gleam update [packages...]",
+    "gleam clean",
+    "gleam shell",
+    "gleam lsp",
+    "gleam hex authenticate|retire|unretire|revert|owner"
+  ]
 }

@@ -1,0 +1,104 @@
+---
+title: "Compilation targets"
+description: "Compile Gleam to Erlang/BEAM or JavaScript"
+---
+
+Gleam compiles to two targets: **Erlang** and **JavaScript**. The target controls which runtime your code runs on and which standard library implementations are used.
+
+## Targets
+
+<Tabs>
+  <Tab title="Erlang">
+    The default target. Gleam compiles to `.erl` source files, which are then compiled to BEAM bytecode by the Erlang compiler. The resulting code runs on the BEAM virtual machine and has access to the full OTP ecosystem.
+
+    - Output: `.erl` files → BEAM bytecode
+    - Runtime: Erlang/OTP (any compatible version)
+    - Access to OTP libraries, supervision trees, and distributed primitives
+
+    ```bash
+    gleam build --target erlang
+    gleam run --target erlang
+    gleam test --target erlang
+    ```
+  </Tab>
+  <Tab title="JavaScript">
+    Gleam compiles to ES module `.mjs` files. The output runs in Node.js, Deno, Bun, or any modern browser. TypeScript declaration files can be emitted alongside the compiled output.
+
+    - Output: `.mjs` ES module files
+    - Optional: `.d.ts` TypeScript declaration files
+    - Runtimes: Node.js, Deno, Bun, browser
+
+    ```bash
+    gleam build --target javascript
+    gleam run --target javascript
+    gleam test --target javascript
+    ```
+  </Tab>
+</Tabs>
+
+## Setting a default target
+
+Set the `target` field in `gleam.toml` to avoid passing `--target` on every command:
+
+```toml gleam.toml
+target = "javascript"
+```
+
+The default value is `"erlang"` when `target` is omitted.
+
+## Selecting a JavaScript runtime
+
+When using the JavaScript target, specify the runtime with `--runtime` or set a default in `gleam.toml`:
+
+```bash
+gleam run --target javascript --runtime node
+gleam run --target javascript --runtime deno
+gleam run --target javascript --runtime bun
+```
+
+```toml gleam.toml
+[javascript]
+runtime = "deno"
+```
+
+## TypeScript declarations
+
+The JavaScript target can emit `.d.ts` declaration files for every compiled module. Enable this in `gleam.toml`:
+
+```toml gleam.toml
+[javascript]
+typescript_declarations = true
+```
+
+## Target-specific code
+
+Use the `@target` attribute to write code that compiles only for a specific target. This is useful when calling platform-specific FFI or using target-specific standard library functions.
+
+<Tabs>
+  <Tab title="Erlang-only">
+    ```gleam
+    @target(erlang)
+    pub fn start_application() -> Nil {
+      // Only compiled when targeting Erlang
+      application.start()
+    }
+    ```
+  </Tab>
+  <Tab title="JavaScript-only">
+    ```gleam
+    @target(javascript)
+    pub fn fetch(url: String) -> Promise(Response) {
+      // Only compiled when targeting JavaScript
+      do_fetch(url)
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  A module with `@target` attributes on every public function will only export those functions on the matching target. On the other target the module still compiles but the annotated functions are absent.
+</Note>
+
+<Tip>
+  Prefer writing target-agnostic code where possible. Reserve `@target` for FFI bindings and thin platform wrappers, keeping business logic portable.
+</Tip>

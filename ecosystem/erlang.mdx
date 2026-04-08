@@ -1,0 +1,144 @@
+---
+title: "Erlang interop"
+description: "Using Gleam with Erlang and the BEAM ecosystem"
+---
+
+Gleam's default compilation target is Erlang. Gleam code compiles to `.erl` source files, which are then compiled to BEAM bytecode and run on the Erlang virtual machine (BEAM). This gives Gleam access to the full OTP ecosystem, including supervision trees, distributed messaging, and decades of battle-tested libraries.
+
+## Calling Erlang from Gleam (FFI)
+
+Use the `@external` attribute to bind a Gleam function to an Erlang function. The first argument is the target (`erlang`), the second is the Erlang module name (as an atom), and the third is the function name.
+
+```gleam
+@external(erlang, "erlang", "system_time")
+pub fn system_time(unit: Atom) -> Int
+```
+
+```gleam
+@external(erlang, "lists", "reverse")
+pub fn reverse(list: List(a)) -> List(a)
+```
+
+The module and function names are Erlang atom strings. They correspond directly to the `:module.function` call syntax in Erlang.
+
+### Providing a fallback implementation
+
+Bind to Erlang for the Erlang target and provide a Gleam fallback for other targets:
+
+```gleam
+@external(erlang, "os", "getenv")
+pub fn get_env(name: String) -> Result(String, Nil) {
+  // JavaScript fallback
+  js_get_env(name)
+}
+
+@external(javascript, "./env_ffi.mjs", "getEnv")
+fn js_get_env(name: String) -> Result(String, Nil)
+```
+
+## Type mapping between Gleam and Erlang
+
+| Gleam type | Erlang representation |
+|---|---|
+| `Int` | Integer |
+| `Float` | Float |
+| `String` | UTF-8 binary |
+| `Bool` | `true` / `false` atoms |
+| `Nil` | `nil` atom |
+| `List(a)` | Erlang list |
+| `#(a, b)` | Erlang tuple |
+| Custom types | Tagged tuples or atoms |
+| `BitArray` | Erlang bitstring/binary |
+
+<Note>
+  Gleam strings are UTF-8 binaries in Erlang, not character lists. If an Erlang function expects a charlist, you need to convert with `:erlang.binary_to_list/1` or use an FFI wrapper.
+</Note>
+
+## Using Erlang/OTP libraries
+
+Erlang standard library modules (such as `ets`, `crypto`, `inet`, and OTP behaviours) are available as FFI dependencies with no additional configuration. Reference them directly in `@external` bindings:
+
+```gleam
+@external(erlang, "crypto", "hash")
+pub fn hash(algorithm: Atom, data: BitArray) -> BitArray
+```
+
+## Using Hex packages (Erlang and Elixir)
+
+Erlang and Elixir libraries published on Hex are regular Hex dependencies. Add them to `gleam.toml` the same way as Gleam packages:
+
+```toml gleam.toml
+[dependencies]
+cowboy = ">= 2.10.0 and < 3.0.0"
+```
+
+Then bind to their functions via `@external`:
+
+```gleam
+@external(erlang, "cowboy", "start_clear")
+pub fn start_clear(
+  name: Atom,
+  transport_opts: List(a),
+  protocol_opts: b,
+) -> Result(Pid, c)
+```
+
+## The `[erlang]` configuration section
+
+`gleam.toml` exposes two Erlang-specific settings.
+
+### `application_start_module`
+
+Sets the module that OTP calls to start your application's supervision tree. This corresponds to the `mod` field in the `.app` file:
+
+```toml gleam.toml
+[erlang]
+application_start_module = "my_app/application"
+```
+
+The module must export a `start/2` function that returns `{ok, Pid}`.
+
+### `extra_applications`
+
+Lists OTP applications that must be started before your application. Common entries are `inets` (HTTP client), `ssl`, `crypto`, and `logger`:
+
+```toml gleam.toml
+[erlang]
+extra_applications = ["inets", "ssl", "crypto"]
+```
+
+## Erlang shipment
+
+`gleam export erlang-shipment` produces a self-contained directory of precompiled BEAM files suitable for deployment. The output does not require Gleam or the Gleam build toolchain on the target machine — only a compatible Erlang/OTP installation.
+
+```bash
+gleam export erlang-shipment
+```
+
+The shipment is written to `build/erlang-shipment/`. It includes:
+
+- Compiled `.beam` files for your project and all dependencies.
+- An `entrypoint.sh` script (Linux/macOS) and `entrypoint.ps1` (Windows) that launch the application using `erl`.
+
+To run the shipment on the target machine:
+
+```bash
+./build/erlang-shipment/entrypoint.sh run
+```
+
+<Tip>
+  Use Erlang shipments to deploy Gleam applications to servers that have Erlang installed but not Gleam. This is the recommended deployment approach for long-running Erlang/OTP applications.
+</Tip>
+
+## Target-specific code
+
+Use `@target(erlang)` to write Erlang-only functions that are excluded when compiling to JavaScript:
+
+```gleam
+@target(erlang)
+pub fn start_supervisor() -> Result(Pid, StartError) {
+  supervisor.start(child_specs())
+}
+```
+
+See [Compilation targets](/project/targets) for details on the `@target` attribute.

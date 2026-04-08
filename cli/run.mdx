@@ -1,0 +1,71 @@
+---
+title: "gleam run"
+description: "Run the project"
+---
+
+`gleam run` builds the project and then calls the `main` function from the module named after the package (e.g. `my_app.main()`).
+
+## Usage
+
+```bash
+gleam run [--target erlang|javascript] [--runtime node|deno|bun] [--module <module>] [--no-print-progress] [-- <arguments>]
+```
+
+## Flags
+
+| Flag | Short | Description | Default |
+|---|---|---|---|
+| `--target <target>` | `-t` | The compilation target: `erlang` or `javascript`. | `erlang` |
+| `--runtime <runtime>` | | The JavaScript runtime to use: `node`, `deno`, or `bun`. Only valid when `--target javascript`. | `node` |
+| `--module <module>` | `-m` | Run `main` from this module instead of the default package module. | Package name |
+| `--no-print-progress` | | Suppress progress output to stderr. | `false` |
+
+Any arguments after `--` are forwarded to the running program.
+
+## Examples
+
+Run the project with default settings:
+
+```bash
+gleam run
+```
+
+Run targeting JavaScript with the Deno runtime:
+
+```bash
+gleam run --target javascript --runtime deno
+```
+
+Run a specific module:
+
+```bash
+gleam run --module my_app/scripts/migrate
+```
+
+Pass arguments to the program:
+
+```bash
+gleam run -- --port 8080 --env production
+```
+
+## Related commands
+
+### gleam dev
+
+Runs the `main` function from the `<package>_dev` module. Useful for development-only entrypoints such as database seeders or local servers.
+
+```bash
+gleam dev [--target erlang|javascript] [--runtime node|deno|bun] [-- <arguments>]
+```
+
+### gleam shell
+
+Starts an Erlang REPL (shell) with the compiled Gleam project loaded. Only available when targeting Erlang.
+
+```bash
+gleam shell
+```
+
+<Tip>
+Use `gleam dev` to keep development tooling separate from your production `main` function.
+</Tip>

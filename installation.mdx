@@ -1,0 +1,197 @@
+---
+title: "Installation"
+description: "Install Gleam on macOS, Linux, or Windows using Homebrew, a package manager, a prebuilt binary, asdf, or Docker."
+---
+
+Gleam is distributed as a single statically linked binary. There are no runtime dependencies beyond an Erlang installation (for the Erlang target) or a Node.js installation (for the JavaScript target).
+
+<Info>
+The examples on this page install the latest stable release. At the time of writing, that is **v1.15.1**.
+</Info>
+
+## Install Gleam
+
+<Steps>
+  <Step title="Choose an installation method">
+
+    <CodeGroup>
+
+    ```bash Homebrew (macOS / Linux)
+    brew install gleam
+    ```
+
+    ```bash apt (Debian / Ubuntu)
+    # Add the Gleam PPA, then install
+    sudo apt-add-repository ppa:gleam-lang/gleam
+    sudo apt update
+    sudo apt install gleam
+    ```
+
+    ```bash winget (Windows)
+    winget install gleam
+    ```
+
+    ```bash asdf
+    asdf plugin add gleam
+    asdf install gleam latest
+    asdf global gleam latest
+    ```
+
+    ```bash Binary download (all platforms)
+    # Download the appropriate binary from the GitHub releases page:
+    # https://github.com/gleam-lang/gleam/releases/latest
+    #
+    # Example for Linux x86-64:
+    curl -L https://github.com/gleam-lang/gleam/releases/download/v1.15.1/gleam-v1.15.1-x86_64-unknown-linux-musl.tar.gz \
+      | tar -xz -C /usr/local/bin
+    ```
+
+    </CodeGroup>
+
+  </Step>
+
+  <Step title="Verify the installation">
+
+    Run the following command to confirm Gleam is on your `PATH` and reports the expected version:
+
+    ```bash
+    gleam --version
+    ```
+
+    You should see output like:
+
+    ```
+    gleam 1.15.1
+    ```
+
+  </Step>
+
+  <Step title="Install an Erlang runtime">
+
+    The default Gleam compilation target is Erlang, so you need an Erlang installation to run your programs. Gleam generates standard `.beam` files and requires Erlang/OTP 26 or later.
+
+    <CodeGroup>
+
+    ```bash Homebrew (macOS / Linux)
+    brew install erlang
+    ```
+
+    ```bash apt (Debian / Ubuntu)
+    sudo apt install erlang
+    ```
+
+    ```bash asdf
+    asdf plugin add erlang
+    asdf install erlang latest
+    asdf global erlang latest
+    ```
+
+    ```bash winget (Windows)
+    winget install erlang
+    ```
+
+    </CodeGroup>
+
+    <Tip>
+    If you only plan to target JavaScript, you can skip the Erlang installation and use Node.js instead. See the [JavaScript target](/project/targets) documentation.
+    </Tip>
+
+  </Step>
+</Steps>
+
+## Docker images
+
+Official Docker images are published to GitHub Container Registry for every release. Each image variant bundles the matching runtime.
+
+```bash
+# Erlang runtime (default target)
+docker pull ghcr.io/gleam-lang/gleam:v1.15.1-erlang
+
+# Erlang on Alpine (smaller image)
+docker pull ghcr.io/gleam-lang/gleam:v1.15.1-erlang-alpine
+
+# Node.js runtime (JavaScript target)
+docker pull ghcr.io/gleam-lang/gleam:v1.15.1-node
+
+# Node.js on Alpine
+docker pull ghcr.io/gleam-lang/gleam:v1.15.1-node-alpine
+```
+
+<Note>
+Images tagged with a version (e.g. `v1.15.1-erlang`) are immutable. Use these in production. The `latest` tag tracks the most recent release.
+</Note>
+
+## Editor setup
+
+### VS Code
+
+Install the official **Gleam** extension from the VS Code Marketplace. It bundles the language server and provides syntax highlighting, type information on hover, go-to-definition, and inline error reporting.
+
+```bash
+code --install-extension gleam-lang.gleam
+```
+
+### Other editors via LSP
+
+Gleam ships with a built-in language server. Any editor with LSP support can use it. Start the server by running:
+
+```bash
+gleam lsp
+```
+
+Configure your editor to invoke this command as the language server for `.gleam` files. The server communicates over stdin/stdout using the standard Language Server Protocol.
+
+Common LSP client configurations:
+
+<CodeGroup>
+
+```lua Neovim (nvim-lspconfig)
+require('lspconfig').gleam.setup({})
+```
+
+```json Helix (languages.toml)
+[[language]]
+name = "gleam"
+language-servers = ["gleam"]
+
+[language-server.gleam]
+command = "gleam"
+args = ["lsp"]
+```
+
+```json Zed (settings.json)
+{
+  "languages": {
+    "Gleam": {
+      "language_servers": ["gleam-lsp"]
+    }
+  },
+  "lsp": {
+    "gleam-lsp": {
+      "binary": {
+        "path": "gleam",
+        "arguments": ["lsp"]
+      }
+    }
+  }
+}
+```
+
+</CodeGroup>
+
+<Tip>
+The language server requires the project to have a `gleam.toml` file at its root. Run `gleam new` to create a properly structured project before opening it in your editor.
+</Tip>
+
+## Next steps
+
+Once Gleam is installed, create your first project:
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Create and run a Gleam project in five minutes.
+  </Card>
+  <Card title="CLI reference" icon="terminal" href="/cli/overview">
+    Full documentation for all `gleam` commands.
+  </Card>
+</CardGroup>

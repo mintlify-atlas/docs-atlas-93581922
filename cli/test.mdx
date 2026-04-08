@@ -1,0 +1,78 @@
+---
+title: "gleam test"
+description: "Run the project tests"
+---
+
+`gleam test` builds the project and then calls the `main` function from the `<package>_test` module (e.g. `my_app_test.main()`).
+
+## Usage
+
+```bash
+gleam test [--target erlang|javascript] [--runtime node|deno|bun] [-- <arguments>]
+```
+
+## Flags
+
+| Flag | Short | Description | Default |
+|---|---|---|---|
+| `--target <target>` | `-t` | The compilation target: `erlang` or `javascript`. | `erlang` |
+| `--runtime <runtime>` | | The JavaScript runtime to use: `node`, `deno`, or `bun`. Only valid when `--target javascript`. | `node` |
+
+Any arguments after `--` are forwarded to the test runner.
+
+## Test module
+
+By convention, tests live in `test/<package>_test.gleam`. New projects generated with `gleam new` include this file automatically.
+
+```gleam
+// test/my_app_test.gleam
+import gleeunit
+
+pub fn main() {
+  gleeunit.main()
+}
+```
+
+[gleeunit](https://hex.pm/packages/gleeunit) is the standard Gleam test runner. It discovers and runs all functions whose names end with `_test`.
+
+## Examples
+
+Run the test suite:
+
+```bash
+gleam test
+```
+
+Run tests targeting JavaScript:
+
+```bash
+gleam test --target javascript
+```
+
+Run tests with the Bun runtime:
+
+```bash
+gleam test --target javascript --runtime bun
+```
+
+Pass flags to the test runner:
+
+```bash
+gleam test -- --seed 42
+```
+
+## gleam check
+
+`gleam check` type-checks the entire project — including all dependencies — without generating any compiled output. It is faster than a full build and useful during development.
+
+```bash
+gleam check [--target erlang|javascript]
+```
+
+| Flag | Short | Description | Default |
+|---|---|---|---|
+| `--target <target>` | `-t` | The compilation target to type-check for. | `erlang` |
+
+<Tip>
+Run `gleam check` in your editor's save hook or CI pipeline for fast feedback without the overhead of a full compile.
+</Tip>

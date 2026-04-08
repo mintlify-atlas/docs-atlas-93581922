@@ -1,0 +1,75 @@
+---
+title: "gleam format"
+description: "Format Gleam source code"
+---
+
+`gleam format` formats Gleam source files in place. By default it formats all `.gleam` files found in the current directory and its subdirectories.
+
+## Usage
+
+```bash
+gleam format [files...] [--stdin] [--check]
+```
+
+## Arguments
+
+| Argument | Description |
+|---|---|
+| `[files...]` | Files or directories to format. Defaults to `.` (current directory). |
+
+## Flags
+
+| Flag | Description | Default |
+|---|---|---|
+| `--check` | Only check whether files are formatted. Exits with a non-zero status if any file would be changed. Does not write files. | `false` |
+| `--stdin` | Read source code from standard input and write the formatted result to standard output. | `false` |
+
+## Examples
+
+Format all `.gleam` files in the project:
+
+```bash
+gleam format
+```
+
+Format a single file:
+
+```bash
+gleam format src/my_app.gleam
+```
+
+Format a directory:
+
+```bash
+gleam format src/
+```
+
+Check formatting without modifying files (useful in CI):
+
+```bash
+gleam format --check
+```
+
+Format code piped from stdin:
+
+```bash
+cat src/my_app.gleam | gleam format --stdin
+```
+
+<Note>
+`gleam format --check` exits with status `1` if any file is not correctly formatted. Use this in CI to enforce consistent style.
+</Note>
+
+## gleam fix
+
+`gleam fix` rewrites Gleam source files to replace deprecated syntax and patterns with their modern equivalents. Run it after upgrading to a new Gleam version that deprecates language features.
+
+```bash
+gleam fix
+```
+
+`gleam fix` modifies files in place. It operates on all `.gleam` files in the current project.
+
+<Warning>
+Review the changes made by `gleam fix` before committing them. While the rewrites are mechanical and safe, it is good practice to understand what changed.
+</Warning>

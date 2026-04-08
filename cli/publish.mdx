@@ -1,0 +1,120 @@
+---
+title: "gleam publish"
+description: "Publish to Hex.pm"
+---
+
+`gleam publish` packages the project and uploads it to the [Hex](https://hex.pm) package repository.
+
+<Warning>
+Ensure your package is production-ready before publishing. For packages that are not yet ready for general use, consider using git or path dependencies instead.
+</Warning>
+
+## Usage
+
+```bash
+gleam publish [--replace] [-y]
+```
+
+## Flags
+
+| Flag | Short | Description | Default |
+|---|---|---|---|
+| `--replace` | | Replace the most recent release of this package with the current one. | `false` |
+| `--yes` | `-y` | Automatically accept all confirmation prompts. | `false` |
+
+## Authentication
+
+`gleam publish` can authenticate using the `HEXPM_API_KEY` environment variable. If this variable is not set, the CLI will prompt for credentials.
+
+```bash
+export HEXPM_API_KEY=your_hex_api_key
+gleam publish
+```
+
+To create or retrieve a Hex API key, use `gleam hex authenticate`.
+
+## Examples
+
+Publish a package interactively:
+
+```bash
+gleam publish
+```
+
+Publish without confirmation prompts (useful in CI):
+
+```bash
+gleam publish -y
+```
+
+Replace the latest release:
+
+```bash
+gleam publish --replace
+```
+
+## Hex subcommands
+
+### gleam hex authenticate
+
+Log in to Hex and save credentials locally. If credentials already exist they are replaced.
+
+```bash
+gleam hex authenticate
+```
+
+### gleam hex retire
+
+Mark a specific release as retired. Retired releases remain available but are hidden from search and display a warning to users.
+
+```bash
+gleam hex retire --package <name> --version <version> --reason <reason> [message]
+```
+
+| Flag | Description |
+|---|---|
+| `--package <name>` | The name of the package to retire. |
+| `--version <version>` | The version to retire. |
+| `--reason <reason>` | The reason for retirement (e.g. `security`, `deprecated`, `renamed`, `invalid`, `other`). |
+
+Optionally accepts a free-text message as a positional argument.
+
+Uses `HEXPM_API_KEY` if set.
+
+### gleam hex unretire
+
+Un-retire a previously retired release.
+
+```bash
+gleam hex unretire --package <name> --version <version>
+```
+
+Uses `HEXPM_API_KEY` if set.
+
+### gleam hex revert
+
+Permanently remove a release from Hex. This cannot be undone.
+
+```bash
+gleam hex revert [--package <name>] [--version <version>]
+```
+
+Uses `HEXPM_API_KEY` if set.
+
+<Warning>
+`gleam hex revert` permanently deletes the release from Hex. This action cannot be undone.
+</Warning>
+
+### gleam hex owner
+
+Manage ownership of a Hex package.
+
+```bash
+# Add a new owner
+gleam hex owner add <package> --user <username_or_email> [--level maintainer|full]
+
+# Transfer ownership to a new user
+gleam hex owner transfer --package <package> --to <username_or_email>
+```
+
+The `--level` flag for `owner add` defaults to `maintainer`.

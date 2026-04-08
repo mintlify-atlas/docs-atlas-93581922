@@ -1,0 +1,70 @@
+---
+title: "gleam build"
+description: "Build the project"
+---
+
+`gleam build` compiles all Gleam modules in the project. It also downloads any missing dependencies before compiling.
+
+## Usage
+
+```bash
+gleam build [--target erlang|javascript] [--warnings-as-errors] [--no-print-progress]
+```
+
+## Flags
+
+| Flag | Short | Description | Default |
+|---|---|---|---|
+| `--target <target>` | `-t` | The compilation target: `erlang` or `javascript`. | `erlang` |
+| `--warnings-as-errors` | | Treat any compiler warning as an error, causing the build to fail. | `false` |
+| `--no-print-progress` | | Suppress progress output to stderr. | `false` |
+
+## What it does
+
+1. Resolves and downloads any dependencies not yet present in the build cache.
+2. Compiles all packages in the dependency graph, then compiles the root package.
+3. Writes compiled output to the `build/` directory.
+
+## Build output
+
+Compiled artifacts are written under `build/dev/`:
+
+```
+build/
+└── dev/
+    ├── erlang/       # Compiled BEAM bytecode (when targeting Erlang)
+    │   └── <package>/
+    │       └── ebin/
+    └── javascript/   # Compiled JS modules (when targeting JavaScript)
+        └── <package>/
+```
+
+<Note>
+The `build/` directory is managed by Gleam. Do not commit it to version control — it is listed in `.gitignore` by default.
+</Note>
+
+## Related commands
+
+- [`gleam check`](/cli/test) — Type-check the project without generating any code.
+- [`gleam clean`](/cli/overview) — Delete the `build/` directory.
+- [`gleam run`](/cli/run) — Build and then run the project.
+
+## Examples
+
+Build for the default Erlang target:
+
+```bash
+gleam build
+```
+
+Build for JavaScript:
+
+```bash
+gleam build --target javascript
+```
+
+Build and fail on any warning (useful in CI):
+
+```bash
+gleam build --warnings-as-errors
+```

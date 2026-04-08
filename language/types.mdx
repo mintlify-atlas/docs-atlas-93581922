@@ -1,0 +1,244 @@
+---
+title: "Types"
+description: "Gleam's type system: inference, annotations, generics, aliases, and the standard library types."
+---
+
+Gleam has a strong, static type system with full type inference. The compiler verifies all types at compile time, and runtime type errors are impossible in pure Gleam code.
+
+## Type inference
+
+You rarely need to write type annotations. The compiler infers types from how values are used.
+
+```gleam
+// All types are inferred — no annotations needed
+let count = 42               // Int
+let ratio = 3.14             // Float
+let name = "Alice"           // String
+let active = True            // Bool
+let items = [1, 2, 3]        // List(Int)
+let pair = #("hello", 99)    // #(String, Int)
+```
+
+## Type annotations
+
+Annotations are written after a `:`. They are optional on `let` bindings but required (or strongly recommended) on function signatures.
+
+```gleam
+let count: Int = 42
+let name: String = "Alice"
+let items: List(Int) = [1, 2, 3]
+```
+
+A `_` in an annotation acts as a type hole — the compiler fills in the inferred type. This is useful when you want to annotate part of a complex type:
+
+```gleam
+let result: Result(_, String) = Ok(42)
+```
+
+## Generic types
+
+Generic type parameters are lowercase names. A function that works for any type uses a type variable:
+
+```gleam
+pub fn identity(x: a) -> a {
+  x
+}
+
+pub fn pair(x: a, y: b) -> #(a, b) {
+  #(x, y)
+}
+
+pub fn first(list: List(a)) -> a {
+  todo
+}
+```
+
+Custom types can also be generic:
+
+```gleam
+pub type Box(a) {
+  Box(value: a)
+}
+
+pub type Pair(a, b) {
+  Pair(first: a, second: b)
+}
+```
+
+## Type aliases
+
+A type alias gives a new name to an existing type. It is purely cosmetic — the underlying type is the same.
+
+```gleam
+pub type UserId = Int
+pub type Name = String
+pub type Headers = List(#(String, String))
+
+// Aliases can be generic
+pub type Callback(a) = fn(a) -> Nil
+```
+
+<Note>
+Type aliases do not create new types. `UserId` and `Int` are interchangeable as far as the type checker is concerned.
+</Note>
+
+## Standard library types
+
+### Int
+
+Arbitrary-precision integers.
+
+```gleam
+let n: Int = 100
+```
+
+### Float
+
+64-bit IEEE 754 floating-point numbers. Always require a decimal point.
+
+```gleam
+let f: Float = 3.14
+```
+
+### String
+
+UTF-8 encoded text.
+
+```gleam
+let s: String = "hello"
+```
+
+### Bool
+
+```gleam
+let yes: Bool = True
+let no: Bool = False
+```
+
+### Nil
+
+The unit type. Represents the absence of a meaningful value.
+
+```gleam
+let nothing: Nil = Nil
+```
+
+### BitArray
+
+A sequence of bits. Used for binary data and protocol handling.
+
+```gleam
+let bytes: BitArray = <<0x48, 0x65, 0x6C, 0x6C, 0x6F>>
+```
+
+### List
+
+An immutable singly-linked list. All elements must have the same type.
+
+```gleam
+let numbers: List(Int) = [1, 2, 3, 4, 5]
+let empty: List(String) = []
+
+// Prepend with ..
+let more = [0, ..numbers]  // [0, 1, 2, 3, 4, 5]
+```
+
+<Tip>
+Lists are efficient at prepending but linear-time for random access and appending. For sequences that require frequent appending, consider building the list in reverse and calling `list.reverse`.
+</Tip>
+
+### Tuple
+
+A fixed-length, ordered collection where each element can have a different type. Written with `#(...)`.
+
+```gleam
+let point: #(Int, Int) = #(10, 20)
+let triple: #(String, Int, Bool) = #("Alice", 30, True)
+
+// Access by zero-based index
+let x = point.0  // 10
+let y = point.1  // 20
+```
+
+### Result
+
+`Result(value, error)` represents a computation that can succeed or fail. It has two variants: `Ok(value)` and `Error(reason)`.
+
+```gleam
+pub type Result(value, error) {
+  Ok(value)
+  Error(error)
+}
+```
+
+Working with `Result`:
+
+```gleam
+import gleam/int
+
+pub fn parse_age(input: String) -> Result(Int, String) {
+  case int.parse(input) {
+    Ok(n) if n >= 0 -> Ok(n)
+    Ok(_) -> Error("age must be non-negative")
+    Error(_) -> Error("not a valid integer")
+  }
+}
+
+pub fn greet_with_age(input: String) -> String {
+  case parse_age(input) {
+    Ok(age) -> "You are " <> int.to_string(age) <> " years old."
+    Error(msg) -> "Error: " <> msg
+  }
+}
+```
+
+Use `result.map`, `result.try`, and `result.unwrap` from `gleam/result` for composing results without nested `case` expressions:
+
+```gleam
+import gleam/result
+
+pub fn double_parsed(input: String) -> Result(Int, String) {
+  input
+  |> int.parse
+  |> result.map_error(fn(_) { "parse failed" })
+  |> result.map(fn(n) { n * 2 })
+}
+```
+
+### Option
+
+`Option(a)` represents a value that may or may not be present. It is defined in `gleam/option`:
+
+```gleam
+import gleam/option.{type Option, None, Some}
+
+pub fn find_user(id: Int) -> Option(String) {
+  case id {
+    1 -> Some("Alice")
+    2 -> Some("Bob")
+    _ -> None
+  }
+}
+
+pub fn greet(user: Option(String)) -> String {
+  case user {
+    Some(name) -> "Hello, " <> name <> "!"
+    None -> "Hello, stranger!"
+  }
+}
+```
+
+<Info>
+`Option(a)` is equivalent to `Result(a, Nil)`. In many cases, `Result` is preferred because it can carry error information. Use `Option` when the absence of a value needs no explanation.
+</Info>
+
+## Type holes in annotations
+
+When you want the compiler to infer part of a type annotation, use `_`:
+
+```gleam
+pub fn load_user(id: Int) -> Result(_, String) {
+  // The compiler infers the Ok type from the function body
+  todo
+}
+```

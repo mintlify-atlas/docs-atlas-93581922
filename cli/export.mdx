@@ -1,0 +1,105 @@
+---
+title: "gleam export"
+description: "Export project artifacts"
+---
+
+`gleam export` produces artifacts from your Gleam project for deployment, distribution, or external tooling. Each subcommand exports a different artifact type.
+
+## Subcommands
+
+### gleam export erlang-shipment
+
+Compile the project and bundle the precompiled Erlang BEAM bytecode together with an entrypoint script, producing a directory that can be deployed to any machine with Erlang installed — no Gleam toolchain required.
+
+```bash
+gleam export erlang-shipment
+```
+
+Output is written to `build/erlang-shipment/`.
+
+### gleam export hex-tarball
+
+Bundle the package into a `.tar.gz` tarball in the format expected by Hex. Useful for inspecting exactly what will be uploaded before running `gleam publish`.
+
+```bash
+gleam export hex-tarball
+```
+
+### gleam export javascript-prelude
+
+Print the JavaScript prelude module to stdout. The prelude provides the runtime helpers that all compiled Gleam JavaScript output depends on.
+
+```bash
+gleam export javascript-prelude
+```
+
+Redirect to a file:
+
+```bash
+gleam export javascript-prelude > gleam-prelude.mjs
+```
+
+### gleam export typescript-prelude
+
+Print the TypeScript prelude module to stdout.
+
+```bash
+gleam export typescript-prelude
+```
+
+Redirect to a file:
+
+```bash
+gleam export typescript-prelude > gleam-prelude.d.mts
+```
+
+### gleam export package-interface
+
+Export a JSON file describing the modules, functions, and types defined in the project. Intended for use by external tools (editors, code generators, etc.) that need structured information about a Gleam package.
+
+```bash
+gleam export package-interface --out <path>
+```
+
+| Flag | Description |
+|---|---|
+| `--out <path>` | **Required.** The file path to write the JSON output to. |
+
+**Example:**
+
+```bash
+gleam export package-interface --out build/package-interface.json
+```
+
+### gleam export package-information
+
+Export the contents of `gleam.toml` as a JSON file. Useful for tooling that needs to read package metadata in a structured format.
+
+```bash
+gleam export package-information --out <path>
+```
+
+| Flag | Description |
+|---|---|
+| `--out <path>` | **Required.** The file path to write the JSON output to. |
+
+**Example:**
+
+```bash
+gleam export package-information --out build/package-info.json
+```
+
+## Summary
+
+| Subcommand | Output | Use case |
+|---|---|---|
+| `erlang-shipment` | `build/erlang-shipment/` | Deploying Erlang apps without Gleam |
+| `hex-tarball` | `.tar.gz` tarball | Inspecting the Hex publish artifact |
+| `javascript-prelude` | stdout | Bundlers and custom JS build pipelines |
+| `typescript-prelude` | stdout | TypeScript projects consuming Gleam JS output |
+| `package-interface` | JSON file | Editor tooling, code generators |
+| `package-information` | JSON file | Tooling that reads `gleam.toml` metadata |
+
+<Note>
+`gleam export erlang-shipment` is the recommended approach for deploying Gleam applications to production Erlang environments. The shipment directory contains everything needed to run the application except the Erlang runtime itself.
+</Note>

@@ -1,80 +1,277 @@
 ---
 title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+description: "Create a new Gleam project, write your first program, add a dependency, and run tests — all in under five minutes."
 ---
 
-## Get started in three steps
+This guide takes you from a fresh Gleam installation to a running program with a passing test suite. By the end you will have a working project and a mental model for how Gleam projects are structured.
 
-Get your documentation site running locally and make your first customization.
+<Info>
+This guide assumes Gleam is already installed. If not, follow the [installation guide](/installation) first.
+</Info>
 
-### Step 1: Set up your local environment
+<Steps>
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+  <Step title="Create a new project">
 
-### Step 2: Deploy your changes
+    Run `gleam new` with a project name. Project names must be lowercase and may contain letters, digits, and underscores.
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    ```bash
+    gleam new hello_world
+    ```
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+    Gleam confirms the project was created and prints the next steps:
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+    ```
+    Your Gleam project hello_world has been successfully created.
+    The project can be compiled and tested by running these commands:
 
-### Step 3: Go live
+        cd hello_world
+        gleam test
+    ```
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+    Change into the project directory:
 
-## Next steps
+    ```bash
+    cd hello_world
+    ```
 
-Now that you have your docs running, explore these key features:
+  </Step>
+
+  <Step title="Explore the project structure">
+
+    The generated project has the following layout:
+
+    ```
+    hello_world/
+    ├── .github/
+    │   └── workflows/
+    │       └── test.yml            # GitHub Actions CI workflow
+    ├── src/
+    │   └── hello_world.gleam       # Your application code
+    ├── test/
+    │   └── hello_world_test.gleam  # Your test code
+    ├── .gitignore
+    ├── gleam.toml                  # Project configuration
+    └── README.md
+    ```
+
+    Source files live in `src/`, test files live in `test/`. The build system compiles both separately: `gleam run` only compiles `src/`, while `gleam test` compiles both.
+
+  </Step>
+
+  <Step title="Review gleam.toml">
+
+    `gleam.toml` is the project manifest. Open it to see the defaults:
+
+    ```toml gleam.toml
+    name = "hello_world"
+    version = "1.0.0"
+
+    # Fill out these fields if you intend to generate HTML documentation or publish
+    # your project to the Hex package manager.
+    #
+    # description = ""
+    # licences = ["Apache-2.0"]
+    # repository = { type = "github", user = "", repo = "" }
+    # links = [{ title = "Website", href = "" }]
+    #
+    # For a full reference of all the available options, you can have a look at
+    # https://gleam.run/writing-gleam/gleam-toml/.
+
+    [dependencies]
+    gleam_stdlib = ">= 0.70.0 and < 2.0.0"
+
+    [dev_dependencies]
+    gleeunit = ">= 1.0.0 and < 2.0.0"
+    ```
+
+    The `[dependencies]` section lists packages required in production. The `[dev_dependencies]` section lists packages used only during development and testing. Both sections pull from the [Hex](https://hex.pm) package registry.
+
+  </Step>
+
+  <Step title="Read the generated source file">
+
+    Open `src/hello_world.gleam`:
+
+    ```gleam src/hello_world.gleam
+    import gleam/io
+
+    pub fn main() -> Nil {
+      io.println("Hello from hello_world!")
+    }
+    ```
+
+    A few things to note:
+
+    - `import gleam/io` brings in the standard library's I/O module.
+    - `pub fn main() -> Nil` declares a public function named `main` that returns `Nil` (Gleam's unit type).
+    - The `main` function in the module named after the project is the program entry point.
+
+  </Step>
+
+  <Step title="Run the project">
+
+    ```bash
+    gleam run
+    ```
+
+    Gleam compiles the project and runs the `main` function:
+
+    ```
+    Hello from hello_world!
+    ```
+
+    On the first run, Gleam downloads dependencies into a local cache. Subsequent runs skip this step and are faster.
+
+    <Tip>
+    To target JavaScript instead of Erlang, pass the `--target` flag: `gleam run --target javascript`. You need Node.js installed for this to work.
+    </Tip>
+
+  </Step>
+
+  <Step title="Edit the source file">
+
+    Modify `src/hello_world.gleam` to make the greeting configurable:
+
+    ```gleam src/hello_world.gleam
+    import gleam/io
+
+    pub fn greet(name: String) -> String {
+      "Hello, " <> name <> "!"
+    }
+
+    pub fn main() -> Nil {
+      io.println(greet("world"))
+    }
+    ```
+
+    Run it again:
+
+    ```bash
+    gleam run
+    ```
+
+    ```
+    Hello, world!
+    ```
+
+    The `<>` operator concatenates strings. Gleam's type system ensures you can only concatenate `String` values — passing a non-string value produces a compile error rather than a runtime surprise.
+
+  </Step>
+
+  <Step title="Read the generated test file">
+
+    Open `test/hello_world_test.gleam`:
+
+    ```gleam test/hello_world_test.gleam
+    import gleeunit
+
+    pub fn main() -> Nil {
+      gleeunit.main()
+    }
+
+    // gleeunit test functions end in `_test`
+    pub fn hello_world_test() {
+      let name = "Joe"
+      let greeting = "Hello, " <> name <> "!"
+
+      assert greeting == "Hello, Joe!"
+    }
+    ```
+
+    `gleeunit` is the default test runner. Any public function whose name ends in `_test` is automatically discovered and run. The `assert` keyword fails the test if the expression evaluates to `False`.
+
+  </Step>
+
+  <Step title="Run the tests">
+
+    ```bash
+    gleam test
+    ```
+
+    ```
+    .
+    1 test, 0 failures
+    ```
+
+    Update the test to cover the `greet` function you added earlier:
+
+    ```gleam test/hello_world_test.gleam
+    import gleeunit
+    import hello_world
+
+    pub fn main() -> Nil {
+      gleeunit.main()
+    }
+
+    pub fn greet_test() {
+      assert hello_world.greet("Joe") == "Hello, Joe!"
+      assert hello_world.greet("Lucy") == "Hello, Lucy!"
+    }
+    ```
+
+    ```bash
+    gleam test
+    ```
+
+    ```
+    ..
+    2 tests, 0 failures
+    ```
+
+  </Step>
+
+  <Step title="Add a dependency">
+
+    Gleam packages are hosted on [Hex](https://hex.pm). Use `gleam add` to add one. For example, add `gleam_json` for JSON encoding and decoding:
+
+    ```bash
+    gleam add gleam_json
+    ```
+
+    Gleam resolves the latest compatible version, updates `gleam.toml`, and writes a locked `manifest.toml`:
+
+    ```toml gleam.toml (updated [dependencies])
+    [dependencies]
+    gleam_stdlib = ">= 0.70.0 and < 2.0.0"
+    gleam_json = ">= 2.0.0 and < 3.0.0"
+    ```
+
+    You can now import and use the package in your source files:
+
+    ```gleam
+    import gleam/json
+
+    pub fn main() {
+      let encoded = json.to_string(json.string("Hello, world!"))
+      // encoded == "\"Hello, world!\""
+    }
+    ```
+
+    <Note>
+    `gleam add` adds a production dependency. To add a development-only dependency, use `gleam add --dev <package>`.
+    </Note>
+
+  </Step>
+
+</Steps>
+
+## What you built
+
+You now have a Gleam project that:
+
+- Compiles and runs on the Erlang VM
+- Has a typed `greet` function using string concatenation
+- Has a passing test suite driven by `gleeunit`
+- Pulls in a third-party package from Hex
+
+## Where to go next
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Language guide" icon="book-open" href="/language/basics">
+    Learn Gleam's type system, pattern matching, custom types, and more.
+  </Card>
+  <Card title="CLI reference" icon="terminal" href="/cli/overview">
+    Full documentation for `gleam run`, `gleam test`, `gleam add`, and every other command.
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

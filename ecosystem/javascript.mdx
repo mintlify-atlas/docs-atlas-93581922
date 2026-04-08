@@ -1,0 +1,125 @@
+---
+title: "JavaScript interop"
+description: "Using Gleam with JavaScript and calling JS from Gleam"
+---
+
+Gleam compiles to ES module (`.mjs`) files when targeting JavaScript. The output runs in Node.js, Deno, Bun, and modern browsers without any additional build step.
+
+## Setting JavaScript as the default target
+
+Set `target = "javascript"` in `gleam.toml` to avoid passing `--target javascript` on every command:
+
+```toml gleam.toml
+target = "javascript"
+```
+
+See [Compilation targets](/project/targets) for more details.
+
+## Selecting a runtime
+
+Pass `--runtime` to choose the JavaScript runtime, or set a default in `gleam.toml`:
+
+```bash
+gleam run --runtime node
+gleam run --runtime deno
+gleam run --runtime bun
+```
+
+```toml gleam.toml
+[javascript]
+runtime = "node"
+```
+
+## TypeScript declarations
+
+The compiler can emit `.d.ts` declaration files alongside the compiled `.mjs` output. This allows TypeScript projects to consume Gleam modules with full type information.
+
+Enable this in `gleam.toml`:
+
+```toml gleam.toml
+[javascript]
+typescript_declarations = true
+```
+
+You can also export the TypeScript prelude module separately:
+
+```bash
+gleam export typescript-prelude
+```
+
+## Calling JavaScript from Gleam (FFI)
+
+Use the `@external` attribute to bind a Gleam function to a JavaScript function. The first argument is the target (`javascript`), the second is the module specifier, and the third is the exported function name.
+
+```gleam
+@external(javascript, "./my_ffi.mjs", "readFile")
+pub fn read_file(path: String) -> String
+```
+
+```javascript my_ffi.mjs
+export function readFile(path) {
+  return require("fs").readFileSync(path, "utf8");
+}
+```
+
+The module specifier is resolved relative to the compiled output file. Use a relative path (starting with `./`) for local FFI files, or a bare specifier (e.g., `"node:fs"`) for built-in or installed modules.
+
+### Providing a fallback implementation
+
+You can supply a Gleam implementation that is used when the target is Erlang, and an `@external` binding that is used on JavaScript:
+
+```gleam
+@external(javascript, "./math_ffi.mjs", "randomFloat")
+pub fn random_float() -> Float {
+  // Erlang fallback using the rand module
+  do_random_float()
+}
+
+@external(erlang, "rand", "uniform")
+fn do_random_float() -> Float
+```
+
+## Using npm packages
+
+Gleam does not manage npm packages directly. Install them with your runtime's package manager and reference them via `@external`:
+
+```bash
+npm install lodash
+```
+
+```gleam
+@external(javascript, "lodash/array.js", "chunk")
+pub fn chunk(list: List(a), size: Int) -> List(List(a))
+```
+
+<Note>
+  When targeting browsers or Deno, use import-map-compatible specifiers. When targeting Node.js, bare specifiers (e.g., `"lodash"`) resolve through `node_modules` as usual.
+</Note>
+
+## The JavaScript prelude
+
+Gleam's compiled output depends on a small runtime prelude that implements core language primitives (custom types, bit arrays, etc.). Export it for use in JavaScript-only build pipelines:
+
+```bash
+gleam export javascript-prelude
+```
+
+This writes the prelude to stdout so you can integrate it into a bundler or deploy it alongside your application.
+
+## Example: calling a browser API
+
+```gleam
+@external(javascript, "./dom_ffi.mjs", "getElementById")
+pub fn get_element_by_id(id: String) -> Result(Element, Nil)
+```
+
+```javascript dom_ffi.mjs
+export function getElementById(id) {
+  const el = document.getElementById(id);
+  return el ? { 0: "Ok", 1: el } : { 0: "Error", 1: undefined };
+}
+```
+
+<Tip>
+  Keep FFI modules thin. Put as little logic as possible in `.mjs` files and express the rest in Gleam, so that as much of the codebase as possible benefits from the type system and cross-target compatibility.
+</Tip>

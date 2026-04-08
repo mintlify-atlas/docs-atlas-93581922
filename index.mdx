@@ -1,97 +1,109 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Welcome to Gleam"
+description: "A friendly language for building type-safe, scalable systems that compile to Erlang and JavaScript."
 ---
 
-## Setting up
+Gleam is a statically-typed functional programming language that brings the reliability of a strong type system to the Erlang ecosystem. Write once, run on the battle-tested BEAM virtual machine or compile to JavaScript — all with friendly error messages that actually help you fix bugs.
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install Gleam on macOS, Linux, or Windows and get your environment ready.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Create your first Gleam project and run it in under five minutes.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Language Guide" icon="book" href="/language/basics">
+    Learn Gleam's syntax, type system, pattern matching, and more.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="CLI Reference" icon="terminal" href="/cli/overview">
+    Complete reference for all Gleam CLI commands and flags.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## Why Gleam?
 
-Everything you need to create world-class documentation.
+Gleam combines the power of a strong static type system with the concurrency and fault-tolerance of the Erlang ecosystem. It's designed to be approachable for developers coming from any background.
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
+<CardGroup cols={3}>
+  <Card title="Type safe" icon="shield-check">
+    Full type inference means fewer annotations but total type safety — no runtime type errors.
   </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
+  <Card title="Runs everywhere" icon="globe">
+    Compile to Erlang/BEAM for scalable servers, or to JavaScript for browsers and Node.js.
   </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
+  <Card title="Friendly errors" icon="face-smile">
+    Error messages are clear, precise, and suggest fixes — so you spend less time debugging.
   </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
+  <Card title="No nulls" icon="ban">
+    Gleam has no null values. Use `Option` and `Result` types to handle absence and errors explicitly.
   </Card>
-</Columns>
+  <Card title="Hex ecosystem" icon="box">
+    Access thousands of packages from the Erlang and Elixir Hex.pm ecosystem directly.
+  </Card>
+  <Card title="Built-in tooling" icon="wrench">
+    Formatter, language server (LSP), test runner, and package manager — all included.
+  </Card>
+</CardGroup>
 
-## Need inspiration?
+## Get started
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<Steps>
+  <Step title="Install Gleam">
+    Install the Gleam compiler using your preferred method. See the [installation guide](/installation) for all options.
+
+    ```bash
+    brew install gleam
+    ```
+  </Step>
+  <Step title="Create a new project">
+    Use `gleam new` to scaffold a new project with sensible defaults.
+
+    ```bash
+    gleam new my_app
+    cd my_app
+    ```
+  </Step>
+  <Step title="Run your project">
+    Build and run your project with a single command.
+
+    ```bash
+    gleam run
+    ```
+  </Step>
+  <Step title="Explore the language">
+    Dive into the [Language Guide](/language/basics) to learn Gleam's syntax and features, or browse the [CLI Reference](/cli/overview) for all available commands.
+  </Step>
+</Steps>
+
+## Example
+
+Here's a taste of what Gleam code looks like:
+
+```gleam
+import gleam/float
+import gleam/io
+import gleam/list
+
+pub type Shape {
+  Circle(radius: Float)
+  Rectangle(width: Float, height: Float)
+}
+
+pub fn area(shape: Shape) -> Float {
+  case shape {
+    Circle(radius) -> 3.14159 *. radius *. radius
+    Rectangle(width, height) -> width *. height
+  }
+}
+
+pub fn main() {
+  let shapes = [Circle(5.0), Rectangle(3.0, 4.0)]
+  list.each(shapes, fn(shape) {
+    io.println("Area: " <> float.to_string(area(shape)))
+  })
+}
+```
+
+<Tip>
+  Gleam's `case` expressions are exhaustive — the compiler ensures you handle every possible variant of a type.
+</Tip>

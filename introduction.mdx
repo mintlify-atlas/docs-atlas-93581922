@@ -1,0 +1,60 @@
+---
+title: "Introduction"
+description: "Gleam is a friendly, type-safe language for building systems that run on the Erlang virtual machine and JavaScript runtimes."
+---
+
+Gleam is a statically typed functional language designed for building reliable, concurrent systems. It compiles to both Erlang (running on the BEAM virtual machine) and JavaScript, so you can write once and target multiple runtimes.
+
+The language prioritises clarity over cleverness. There are no null values, no exceptions, no implicit conversions, and no hidden control flow. What you read is what runs.
+
+## Key design goals
+
+**Type safety without the ceremony.** Gleam's type system catches entire classes of bugs at compile time — including mismatched data shapes, exhaustiveness in pattern matching, and incorrect function signatures — without requiring type annotations on every line. Types are inferred wherever possible.
+
+**Friendly errors.** Compiler messages are written in plain language, point directly to the source of the problem, and often suggest a fix. The compiler never gives up after the first error; it reports as many issues as it can in a single pass.
+
+**No null, no exceptions.** Gleam has no `null`, `nil`, or `undefined`. Missing values are represented with the `Result` and `Option` types, making error handling explicit and composable.
+
+**The BEAM and beyond.** By targeting the Erlang virtual machine, Gleam inherits decades of battle-tested infrastructure: preemptive scheduling, per-process garbage collection, soft real-time guarantees, and the OTP framework for building fault-tolerant distributed systems. The JavaScript target lets the same code run in browsers and Node.js.
+
+**Interoperability.** Gleam can call Erlang and Elixir code directly, and Erlang/Elixir code can call Gleam modules. On the JavaScript target, Gleam interoperates with any JavaScript library.
+
+## Meet Lucy
+
+Lucy is Gleam's mascot — a pink, starry creature that appears throughout the project's documentation and community. You will find her in error messages, release announcements, and conference talks. She embodies the project's goal of making programming feel approachable and fun.
+
+## How Gleam compares
+
+| | Gleam | Erlang | Elixir |
+|---|---|---|---|
+| Type system | Static, inferred | Dynamic | Dynamic |
+| Syntax | Rust-like | Prolog-like | Ruby-like |
+| Null | No | No | No |
+| Pattern matching | Yes | Yes | Yes |
+| JavaScript target | Yes | No | No |
+| OTP compatible | Yes | Yes | Yes |
+
+Gleam occupies a specific position: it brings static typing to the BEAM ecosystem. Erlang and Elixir are excellent languages, but their dynamic nature means many bugs are only found at runtime. Gleam catches those bugs before your code ships, while remaining fully interoperable with the broader BEAM ecosystem.
+
+If you are coming from Erlang or Elixir, you will feel at home with the pattern matching and process model. If you are coming from TypeScript or Rust, you will recognise the type system and the emphasis on exhaustive case analysis.
+
+<Note>
+Gleam is not a superset of Erlang or Elixir. It is a distinct language that compiles to Erlang bytecode (`.beam` files) and can therefore use the same runtime, OTP libraries, and deployment tooling.
+</Note>
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install Gleam on macOS, Linux, or Windows, and set up your editor.
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Create your first Gleam project and run it in under five minutes.
+  </Card>
+  <Card title="Language guide" icon="book-open" href="/language/basics">
+    A comprehensive reference to Gleam's syntax, types, and standard library.
+  </Card>
+  <Card title="CLI reference" icon="terminal" href="/cli/overview">
+    Full documentation for every `gleam` command.
+  </Card>
+</CardGroup>

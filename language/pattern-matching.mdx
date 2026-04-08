@@ -1,0 +1,320 @@
+---
+title: "Pattern matching"
+description: "Using case expressions, destructuring, guard clauses, and exhaustiveness checking in Gleam."
+---
+
+Pattern matching is the primary mechanism for inspecting and destructuring values in Gleam. The `case` expression matches a value against a series of patterns and evaluates the first matching branch.
+
+## The `case` expression
+
+```gleam
+case value {
+  pattern1 -> expression1
+  pattern2 -> expression2
+  _ -> fallback
+}
+```
+
+`case` is an expression — it evaluates to a value.
+
+```gleam
+pub fn describe(n: Int) -> String {
+  case n {
+    0 -> "zero"
+    1 -> "one"
+    _ -> "something else"
+  }
+}
+```
+
+## Matching on basic types
+
+### Integers
+
+```gleam
+pub fn fizzbuzz(n: Int) -> String {
+  case n % 15, n % 3, n % 5 {
+    0, _, _ -> "FizzBuzz"
+    _, 0, _ -> "Fizz"
+    _, _, 0 -> "Buzz"
+    _, _, _ -> int.to_string(n)
+  }
+}
+```
+
+### Strings
+
+Match on exact values or prefixes:
+
+```gleam
+pub fn classify_protocol(url: String) -> String {
+  case url {
+    "https://" <> rest -> "secure: " <> rest
+    "http://" <> rest -> "plain: " <> rest
+    _ -> "unknown protocol"
+  }
+}
+```
+
+### Booleans
+
+```gleam
+pub fn describe_bool(b: Bool) -> String {
+  case b {
+    True -> "yes"
+    False -> "no"
+  }
+}
+```
+
+## Multiple subjects
+
+`case` can match on multiple values simultaneously, separated by commas. The pattern must match all of them.
+
+```gleam
+pub fn both_positive(a: Int, b: Int) -> Bool {
+  case a > 0, b > 0 {
+    True, True -> True
+    _, _ -> False
+  }
+}
+```
+
+## Variable binding in patterns
+
+A lowercase name in a pattern binds the matched value to that name:
+
+```gleam
+pub fn increment(result: Result(Int, String)) -> Result(Int, String) {
+  case result {
+    Ok(n) -> Ok(n + 1)
+    Error(msg) -> Error(msg)
+  }
+}
+```
+
+## Discarding values with `_`
+
+A single `_` matches any value without binding it. Prefixing a name with `_` matches and binds but suppresses unused-variable warnings.
+
+```gleam
+pub fn first(pair: #(a, b)) -> a {
+  let #(first, _) = pair
+  first
+}
+
+pub fn head(list: List(a)) -> a {
+  case list {
+    [first, ..] -> first
+    [] -> panic as "empty list"
+  }
+}
+```
+
+## Matching on lists
+
+Lists match with `[pattern, ..rest]`. The `..rest` binds the tail.
+
+```gleam
+pub fn sum(list: List(Int)) -> Int {
+  case list {
+    [] -> 0
+    [head, ..tail] -> head + sum(tail)
+  }
+}
+
+pub fn describe_list(list: List(Int)) -> String {
+  case list {
+    [] -> "empty"
+    [_] -> "one element"
+    [_, _] -> "two elements"
+    [first, ..] -> "starts with " <> int.to_string(first)
+  }
+}
+```
+
+## Matching on tuples
+
+```gleam
+pub fn describe_point(point: #(Int, Int)) -> String {
+  case point {
+    #(0, 0) -> "origin"
+    #(0, y) -> "on y-axis at " <> int.to_string(y)
+    #(x, 0) -> "on x-axis at " <> int.to_string(x)
+    #(x, y) -> int.to_string(x) <> ", " <> int.to_string(y)
+  }
+}
+```
+
+## Matching on custom types
+
+See [Custom types](/language/custom-types) for how to define them. Matching on a custom type destructures its constructor arguments:
+
+```gleam
+pub type Shape {
+  Circle(radius: Float)
+  Rectangle(width: Float, height: Float)
+  Triangle(base: Float, height: Float)
+}
+
+pub fn area(shape: Shape) -> Float {
+  case shape {
+    Circle(radius: r) -> 3.14159 *. r *. r
+    Rectangle(width: w, height: h) -> w *. h
+    Triangle(base: b, height: h) -> b *. h /. 2.0
+  }
+}
+```
+
+Labelled fields can be matched by name or positionally:
+
+```gleam
+case shape {
+  Circle(radius: r) -> r       // labelled
+  Rectangle(w, h) -> w *. h   // positional
+  _ -> 0.0
+}
+```
+
+## `as` patterns (aliases)
+
+Bind a name to a whole pattern while also destructuring it:
+
+```gleam
+pub fn handle(result: Result(Int, String)) -> String {
+  case result {
+    Ok(n) as ok_result ->
+      "Got " <> int.to_string(n)
+    Error(_) as err ->
+      "Failed"
+  }
+}
+```
+
+## Alternative patterns
+
+Use `|` to match multiple patterns in a single branch. All alternatives must bind the same variables.
+
+```gleam
+pub fn is_weekend(day: String) -> Bool {
+  case day {
+    "Saturday" | "Sunday" -> True
+    _ -> False
+  }
+}
+
+pub fn classify(n: Int) -> String {
+  case n {
+    1 | 2 | 3 -> "small"
+    4 | 5 | 6 -> "medium"
+    _ -> "large"
+  }
+}
+```
+
+## Guard clauses
+
+A `if` guard adds an additional boolean condition to a pattern. The branch only matches if both the pattern and the guard are satisfied.
+
+```gleam
+pub fn classify_int(n: Int) -> String {
+  case n {
+    n if n < 0 -> "negative"
+    0 -> "zero"
+    n if n % 2 == 0 -> "positive even"
+    _ -> "positive odd"
+  }
+}
+```
+
+Guards can reference variables bound in the pattern:
+
+```gleam
+pub fn find_first_positive(list: List(Int)) -> Result(Int, Nil) {
+  case list {
+    [] -> Error(Nil)
+    [head, ..] if head > 0 -> Ok(head)
+    [_, ..tail] -> find_first_positive(tail)
+  }
+}
+```
+
+<Note>
+Guard expressions are limited to comparisons, arithmetic, boolean logic, tuple access, and equality. You cannot call arbitrary functions in a guard.
+</Note>
+
+## Nested patterns
+
+Patterns can be nested arbitrarily deep:
+
+```gleam
+pub fn nested_example(value: Result(List(Int), String)) -> String {
+  case value {
+    Ok([]) -> "ok but empty"
+    Ok([first, ..]) -> "ok, first is " <> int.to_string(first)
+    Error(msg) -> "error: " <> msg
+  }
+}
+```
+
+## Exhaustiveness checking
+
+The compiler requires every `case` expression to be exhaustive — all possible values must be covered. If a pattern is missing, the compiler reports an error.
+
+```gleam
+pub type Direction {
+  North
+  South
+  East
+  West
+}
+
+// Compile error: missing cases for East and West
+pub fn describe_bad(d: Direction) -> String {
+  case d {
+    North -> "north"
+    South -> "south"
+    // Error: patterns for East and West are missing
+  }
+}
+
+// Correct: all variants covered
+pub fn describe(d: Direction) -> String {
+  case d {
+    North -> "north"
+    South -> "south"
+    East -> "east"
+    West -> "west"
+  }
+}
+```
+
+<Tip>
+Adding a new variant to a custom type causes every `case` expression that matches on it to produce a compile error. This makes refactoring safe — the compiler tells you every place that needs updating.
+</Tip>
+
+## Let patterns
+
+`let` can also destructure values directly, without a `case`:
+
+```gleam
+let #(x, y) = #(10, 20)
+let [head, ..tail] = [1, 2, 3]
+let Ok(value) = some_result   // panics at runtime if Error
+```
+
+<Warning>
+A `let` pattern that does not cover all cases (such as `let Ok(value) = ...`) will cause a runtime panic if the value does not match. Use `case` when the match may fail.
+</Warning>
+
+## `assert` patterns
+
+`assert` is similar to `let` but explicitly asserts the pattern matches, making the intent clearer in test code:
+
+```gleam
+pub fn hello_world_test() {
+  let name = "Joe"
+  let greeting = "Hello, " <> name <> "!"
+  assert greeting == "Hello, Joe!"
+}
+```

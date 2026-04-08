@@ -1,0 +1,133 @@
+---
+title: "Project structure"
+description: "An overview of how a Gleam project is laid out on disk, what each file and directory is for, and how to create a new project."
+---
+
+Every Gleam project follows a standard directory layout. Understanding this layout helps you navigate projects quickly and know where the compiler expects to find things.
+
+## Directory layout
+
+```
+my_project/
+├── gleam.toml           # Project configuration
+├── manifest.toml        # Dependency lockfile (auto-generated)
+├── README.md
+├── .gitignore
+├── src/
+│   └── my_project.gleam # Source modules
+├── test/
+│   └── my_project_test.gleam # Test modules
+└── build/               # Compiled output (gitignored)
+```
+
+<AccordionGroup>
+  <Accordion title="gleam.toml">
+    The project manifest. Defines the package name, version, dependencies, and all other configuration. You edit this file to add dependencies, set the compilation target, configure documentation, and more.
+
+    See [Configuration](/project/configuration) for a full reference.
+  </Accordion>
+
+  <Accordion title="src/">
+    All production source code lives here. Each `.gleam` file defines one module. The file's path relative to `src/` determines the module name — for example, `src/my_project/utils.gleam` defines the module `my_project/utils`.
+
+    The root source file (`src/my_project.gleam`) is the conventional entry point and defines the `main` function that `gleam run` calls.
+  </Accordion>
+
+  <Accordion title="test/">
+    Test modules live here. They are only compiled in development mode and are never included in published packages. By convention the main test module is named `<package_name>_test.gleam`, and `gleam test` looks for a `main` function inside it.
+
+    Test module names follow the same path-to-module mapping as source modules, but rooted at `test/`.
+  </Accordion>
+
+  <Accordion title="build/">
+    The compiler writes all generated output here — Erlang source files, BEAM bytecode, JavaScript modules, and package caches. You should never edit this directory manually.
+
+    Add `/build` to your `.gitignore`. `gleam new` does this automatically.
+  </Accordion>
+
+  <Accordion title="manifest.toml">
+    The lockfile. After dependency resolution the compiler records the exact version selected for every package here. Commit this file so all contributors and CI environments use identical versions.
+
+    Do not edit `manifest.toml` by hand. Use `gleam update` to refresh it. See [Dependencies](/project/dependencies) for details.
+  </Accordion>
+
+  <Accordion title=".github/workflows/">
+    `gleam new` generates a GitHub Actions workflow at `.github/workflows/test.yml` that installs the BEAM, downloads dependencies, runs tests, and checks formatting on every push and pull request. You can customise this file freely.
+  </Accordion>
+</AccordionGroup>
+
+## Module naming
+
+The module name for any `.gleam` file is its path relative to `src/` (or `test/`), with the `.gleam` extension removed and path separators replaced by `/`.
+
+| File path | Module name |
+|---|---|
+| `src/my_project.gleam` | `my_project` |
+| `src/my_project/http.gleam` | `my_project/http` |
+| `src/my_project/db/queries.gleam` | `my_project/db/queries` |
+| `test/my_project_test.gleam` | `my_project_test` |
+
+Import a module using its full module name:
+
+```gleam
+import my_project/http
+import my_project/db/queries
+```
+
+<Note>
+  Package names must be lowercase and may only contain letters, digits, and underscores. A package name starting with `gleam_` is reserved for official Gleam packages.
+</Note>
+
+## Creating a new project
+
+`gleam new` scaffolds a complete project in one command.
+
+```bash
+gleam new my_project
+```
+
+This creates the directory `my_project/` and generates:
+
+- `gleam.toml` pre-filled with `gleam_stdlib` and `gleeunit` dependencies
+- `src/my_project.gleam` with a `main` function
+- `test/my_project_test.gleam` with a `gleeunit` test runner
+- `README.md`, `.gitignore`, and `.github/workflows/test.yml`
+- An initialised git repository
+
+<Steps>
+  <Step title="Create the project">
+    ```bash
+    gleam new my_project
+    ```
+  </Step>
+  <Step title="Enter the directory">
+    ```bash
+    cd my_project
+    ```
+  </Step>
+  <Step title="Run the tests">
+    ```bash
+    gleam test
+    ```
+  </Step>
+</Steps>
+
+### Template options
+
+By default `gleam new` targets the Erlang VM. Pass `--template` to target JavaScript instead:
+
+```bash
+gleam new my_project --template javascript
+```
+
+This adds `target = "javascript"` to `gleam.toml`. See [Compilation targets](/project/targets) for a full explanation of the two targets.
+
+### Skipping git setup
+
+```bash
+# Skip git init, .gitignore, and all .github/ files
+gleam new my_project --skip-git
+
+# Keep git init and .gitignore, but skip .github/ files
+gleam new my_project --skip-github
+```

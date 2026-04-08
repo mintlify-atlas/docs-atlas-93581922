@@ -1,0 +1,169 @@
+---
+title: "Dependencies"
+description: "How to add, remove, and manage package dependencies in a Gleam project, including version requirement syntax and the manifest lockfile."
+---
+
+Gleam packages are published to the [Hex](https://hex.pm) package repository. The compiler resolves, downloads, and caches packages automatically before building.
+
+## Adding dependencies
+
+Use `gleam add` to add a package from Hex. The command resolves the newest compatible version, updates `gleam.toml`, and downloads the package.
+
+```bash
+# Add a production dependency
+gleam add gleam_http
+
+# Add a dev-only dependency (goes into [dev_dependencies])
+gleam add --dev gleeunit
+
+# Pin to a specific major version
+gleam add gleam_http@2
+
+# Pin to a specific minor version
+gleam add gleam_http@2.5
+
+# Add multiple packages at once
+gleam add gleam_http gleam_json
+```
+
+<Note>
+  Dev dependencies are only compiled when running `gleam test` or `gleam check` in development mode. They are never included when publishing a package to Hex or building in production mode.
+</Note>
+
+## Removing dependencies
+
+```bash
+gleam remove gleam_http
+```
+
+This removes the entry from `gleam.toml` and re-resolves the manifest.
+
+## gleam.toml sections
+
+Packages are listed in two sections of `gleam.toml`:
+
+```toml
+[dependencies]
+gleam_stdlib = ">= 0.70.0 and < 2.0.0"
+gleam_http   = ">= 4.0.0 and < 5.0.0"
+
+[dev_dependencies]
+gleeunit = ">= 1.0.0 and < 2.0.0"
+```
+
+`[dependencies]` — production packages. Included in the compiled application and in the dependency graph when published to Hex.
+
+`[dev_dependencies]` — development-only packages. Used for testing and tooling. Not included when the package is used as a library by others.
+
+## Version requirement syntax
+
+Gleam uses the same version requirement syntax as Hex.
+
+<AccordionGroup>
+  <Accordion title="Range (most common)">
+    Permit a range of versions. The typical pattern is to require at least the current major version and exclude the next one:
+
+    ```toml
+    gleam_stdlib = ">= 1.0.0 and < 2.0.0"
+    ```
+
+    Operators: `>=`, `>`, `<=`, `<`, `==`, `!=`.
+  </Accordion>
+
+  <Accordion title="Exclusion within a range">
+    Permit a range but exclude a specific version, for example a version known to contain a bug:
+
+    ```toml
+    gleam_http = ">= 1.2.0 and < 2.0.0 and != 1.4.1"
+    ```
+  </Accordion>
+
+  <Accordion title="Git dependency">
+    Depend on a package from a Git repository instead of Hex. Useful for unreleased changes or forks:
+
+    ```toml
+    [dependencies]
+    my_package = { git = "https://github.com/example/my_package.git", ref = "a8b3c5d82" }
+    ```
+
+    `ref` can be a commit SHA, a tag name, or a branch name. Using a commit SHA is recommended for reproducibility.
+
+    <Warning>
+      Git dependencies are not permitted when publishing a package to Hex. Switch to a published version before publishing.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="Local path dependency">
+    Point directly at a package directory on the local filesystem. Useful in a monorepo where multiple packages live side by side:
+
+    ```toml
+    [dependencies]
+    shared_types = { path = "../shared_types" }
+    ```
+
+    The path is resolved relative to `gleam.toml`.
+
+    <Warning>
+      Local path dependencies are not permitted when publishing a package to Hex.
+    </Warning>
+  </Accordion>
+</AccordionGroup>
+
+## The manifest lockfile
+
+After dependency resolution succeeds, the compiler writes `manifest.toml`. This file records the exact version (or exact Git commit) chosen for every package in the dependency graph — not just direct dependencies, but transitive ones too.
+
+**Commit `manifest.toml` to version control.** This ensures that every developer and every CI run uses the same package versions, making builds fully reproducible.
+
+Do not edit `manifest.toml` by hand. The compiler updates it automatically.
+
+## Managing installed packages
+
+### List all resolved packages
+
+```bash
+gleam deps list
+```
+
+Prints the name and resolved version of every package in the manifest.
+
+### Show outdated packages
+
+```bash
+gleam deps outdated
+```
+
+Shows which direct dependencies have newer versions available on Hex, along with the current and latest versions.
+
+### Update packages
+
+```bash
+# Update all dependencies to the newest versions allowed by gleam.toml
+gleam update
+
+# Update only specific packages
+gleam update gleam_http gleam_json
+```
+
+`gleam update` re-solves the dependency graph and rewrites `manifest.toml`. It respects the version constraints in `gleam.toml`, so it will not update a package past the upper bound you have set.
+
+### Show the dependency tree
+
+```bash
+# Show the full tree rooted at your project
+gleam deps tree
+
+# Show the subtree rooted at a specific package
+gleam deps tree --package gleam_http
+
+# Show which packages depend on a given package (inverted tree)
+gleam deps tree --invert gleam_http
+```
+
+### Download packages without building
+
+```bash
+gleam deps download
+```
+
+Downloads all packages listed in the manifest without compiling. Useful in CI pipelines to populate the cache as a separate step.

@@ -1,0 +1,123 @@
+---
+title: "Packages"
+description: "Finding and using packages from Hex.pm"
+---
+
+Gleam uses [Hex.pm](https://hex.pm) — the package repository shared with the Erlang and Elixir ecosystems — to distribute libraries. The compiler resolves, downloads, and caches packages automatically.
+
+## Finding packages
+
+Browse packages at [hex.pm](https://hex.pm). You can search by name, keyword, or description. Each package page lists its latest version, documentation links, and download statistics.
+
+## Adding packages
+
+Use `gleam add` to add a package. The compiler finds the newest compatible version, updates `gleam.toml`, and fetches the package.
+
+```bash
+# Add a production dependency
+gleam add gleam_http
+
+# Add a dev-only dependency
+gleam add --dev gleeunit
+
+# Pin to a specific major version
+gleam add gleam_http@2
+
+# Add multiple packages at once
+gleam add gleam_http gleam_json
+```
+
+<Note>
+  Dev dependencies are only compiled during development and testing. They are excluded when your package is published to Hex or built in production mode.
+</Note>
+
+## Dependency types
+
+In addition to Hex packages, `gleam.toml` supports two other dependency forms.
+
+### Git dependencies
+
+Depend on a package from a Git repository. Useful for unreleased changes, forks, or private packages:
+
+```toml
+[dependencies]
+my_package = { git = "https://github.com/example/my_package.git", ref = "a8b3c5d82" }
+```
+
+`ref` accepts a commit SHA, tag name, or branch name. A commit SHA is recommended for reproducibility.
+
+<Warning>
+  Git and local path dependencies cannot be used when publishing a package to Hex. All published packages must declare only Hex dependencies.
+</Warning>
+
+### Local path dependencies
+
+Point at a package directory on the local filesystem. Useful in a monorepo:
+
+```toml
+[dependencies]
+shared_types = { path = "../shared_types" }
+```
+
+The path is resolved relative to `gleam.toml`.
+
+## Fetching dependencies
+
+Any build command automatically downloads missing packages. You can also download without building:
+
+```bash
+gleam deps download
+```
+
+This is useful in CI to populate the package cache as a separate step before compiling.
+
+## Key standard library packages
+
+<CardGroup cols={2}>
+  <Card title="gleam_stdlib" icon="box" href="https://hex.pm/packages/gleam_stdlib">
+    The Gleam standard library. Provides modules for common data structures and operations.
+  </Card>
+  <Card title="gleeunit" icon="flask-conical" href="https://hex.pm/packages/gleeunit">
+    The standard Gleam test framework. Used by `gleam test`.
+  </Card>
+</CardGroup>
+
+### Commonly used modules from `gleam_stdlib`
+
+| Module | Purpose |
+|---|---|
+| `gleam/io` | Console output and basic I/O |
+| `gleam/list` | List manipulation and higher-order functions |
+| `gleam/string` | String operations |
+| `gleam/result` | Working with `Result` values |
+| `gleam/option` | Working with `Option` values |
+| `gleam/dict` | Key-value maps |
+| `gleam/int` | Integer arithmetic and conversion |
+| `gleam/float` | Float arithmetic and conversion |
+
+Import a module from the standard library the same way as any other package module:
+
+```gleam
+import gleam/list
+import gleam/string
+import gleam/result
+
+pub fn greet(name: String) -> String {
+  string.append("Hello, ", name)
+}
+```
+
+## Keeping dependencies up to date
+
+```bash
+# Show which packages have newer versions available
+gleam deps outdated
+
+# Update all packages within the constraints in gleam.toml
+gleam update
+
+# Update specific packages
+gleam update gleam_http gleam_json
+```
+
+See [Dependencies](/project/dependencies) for the full dependency management reference.

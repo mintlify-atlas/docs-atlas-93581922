@@ -1,0 +1,287 @@
+---
+title: "Functions"
+description: "Defining functions, anonymous functions, labelled arguments, higher-order functions, and the use expression."
+---
+
+Functions are the primary unit of abstraction in Gleam. They are first-class values and can be passed to and returned from other functions.
+
+## Defining functions
+
+Use `pub fn` for public functions (accessible from other modules) and `fn` for private functions (accessible only within the current module).
+
+```gleam
+// Public function — visible to other modules
+pub fn add(a: Int, b: Int) -> Int {
+  a + b
+}
+
+// Private function — only visible in this module
+fn square(n: Int) -> Int {
+  n * n
+}
+```
+
+The return type annotation follows `->`. If omitted, the compiler infers it. The body is the last expression; there is no `return` keyword.
+
+```gleam
+// Return type is inferred as String
+pub fn greet(name: String) {
+  "Hello, " <> name <> "!"
+}
+```
+
+### Functions returning Nil
+
+A function that performs a side effect and returns nothing has return type `Nil`.
+
+```gleam
+import gleam/io
+
+pub fn print_twice(message: String) -> Nil {
+  io.println(message)
+  io.println(message)
+}
+```
+
+## Labelled arguments
+
+Gleam supports labelled arguments. Labels appear at the call site and improve readability. The label and the internal variable name can differ.
+
+```gleam
+// Label is `host`, internal name is `host`
+pub fn connect(host host: String, port port: Int) -> String {
+  host <> ":" <> int.to_string(port)
+}
+
+// Calling with labels — order does not matter
+connect(port: 8080, host: "localhost")
+
+// Calling without labels — order must match the definition
+connect("localhost", 8080)
+```
+
+When the label and internal name are the same, you can write them once:
+
+```gleam
+pub fn repeat(times times: Int, value value: String) -> List(String) {
+  todo
+}
+```
+
+<Tip>
+Labelled arguments make call sites self-documenting and let the caller choose any order. Use them for functions with multiple arguments of the same type where order is easy to confuse.
+</Tip>
+
+### Discarding an argument
+
+Prefix the variable name with `_` to indicate it is intentionally unused.
+
+```gleam
+pub fn constant(value: a, _ignored: b) -> a {
+  value
+}
+```
+
+### Labelled discards
+
+```gleam
+pub fn create_server(host host: String, port _port: Int) -> String {
+  host
+}
+```
+
+## Anonymous functions
+
+Anonymous functions are written with `fn`. They close over variables in scope.
+
+```gleam
+let double = fn(x: Int) -> Int { x * 2 }
+let result = double(5)  // 10
+
+// Type annotations on anonymous functions are optional
+let add = fn(a, b) { a + b }
+```
+
+Anonymous functions are frequently used as arguments to higher-order functions:
+
+```gleam
+import gleam/list
+
+let numbers = [1, 2, 3, 4, 5]
+let doubled = list.map(numbers, fn(n) { n * 2 })
+// [2, 4, 6, 8, 10]
+```
+
+### Function captures
+
+A capture is a shorthand for an anonymous function that calls another function with one argument fixed and the rest supplied by the caller. Use `_` as a placeholder for the argument to be supplied.
+
+```gleam
+import gleam/list
+import gleam/string
+
+// fn(s) { string.contains(s, "gleam") }
+let has_gleam = string.contains(_, "gleam")
+
+// fn(n) { list.contains([1, 2, 3], n) }
+let in_list = list.contains([1, 2, 3], _)
+```
+
+## Higher-order functions
+
+Functions are first-class values. They can be passed to and returned from other functions, and stored in data structures.
+
+```gleam
+pub fn apply(f: fn(Int) -> Int, x: Int) -> Int {
+  f(x)
+}
+
+pub fn make_adder(n: Int) -> fn(Int) -> Int {
+  fn(x) { x + n }
+}
+
+pub fn main() {
+  let add_ten = make_adder(10)
+  let result = apply(add_ten, 5)
+  // result == 15
+}
+```
+
+### Common higher-order functions
+
+```gleam
+import gleam/list
+
+let nums = [1, 2, 3, 4, 5]
+
+// Transform each element
+list.map(nums, fn(n) { n * n })
+// [1, 4, 9, 16, 25]
+
+// Keep elements matching a predicate
+list.filter(nums, fn(n) { n > 2 })
+// [3, 4, 5]
+
+// Accumulate a value
+list.fold(nums, 0, fn(acc, n) { acc + n })
+// 15
+```
+
+## The pipe operator
+
+The `|>` operator passes a value as the first argument to the next function. It is the standard way to chain function calls.
+
+```gleam
+import gleam/list
+import gleam/string
+
+pub fn process(names: List(String)) -> List(String) {
+  names
+  |> list.map(string.uppercase)
+  |> list.filter(fn(name) { string.length(name) > 3 })
+  |> list.sort(string.compare)
+}
+```
+
+See [Language basics](/language/basics) for more on the pipe operator.
+
+## The `use` expression
+
+Many Gleam functions accept a callback as their last argument. Without `use`, nesting these callbacks can be difficult to read.
+
+Consider `result.try`, which passes the inner value of an `Ok` to a callback, or returns an `Error` early:
+
+Without `use`:
+
+```gleam
+import gleam/result
+
+pub fn handle_request(raw: String) -> Result(String, String) {
+  result.try(parse(raw), fn(parsed) {
+    result.try(validate(parsed), fn(valid) {
+      result.map(transform(valid), fn(output) {
+        output
+      })
+    })
+  })
+}
+```
+
+With `use`:
+
+```gleam
+import gleam/result
+
+pub fn handle_request(raw: String) -> Result(String, String) {
+  use parsed <- result.try(parse(raw))
+  use valid <- result.try(validate(parsed))
+  use output <- result.map(transform(valid))
+  output
+}
+```
+
+The `use` expression desugars `use x <- f(args)` into calling `f(args, fn(x) { ... })`, where `...` is the rest of the block. This works with any function that takes a callback as its last argument.
+
+```gleam
+import gleam/io
+
+// Without use
+pub fn with_logging(label: String, callback: fn() -> a) -> a {
+  io.println("Starting: " <> label)
+  let result = callback()
+  io.println("Done: " <> label)
+  result
+}
+
+pub fn main() {
+  use <- with_logging("fetch users")
+  // ... body runs as the callback
+  fetch_users()
+}
+```
+
+## Tail call optimisation
+
+Gleam performs tail call optimisation. A recursive call in tail position does not add a stack frame. This allows deep recursion without stack overflow.
+
+```gleam
+fn count_down(from i: Int) -> Nil {
+  case i {
+    0 -> Nil
+    _ -> count_down(from: i - 1)  // tail call
+  }
+}
+
+// This runs 10 million recursions without overflowing the stack
+pub fn main() {
+  count_down(from: 10_000_000)
+}
+```
+
+A practical tail-recursive accumulator pattern:
+
+```gleam
+fn sum_loop(list: List(Int), acc: Int) -> Int {
+  case list {
+    [] -> acc
+    [head, ..tail] -> sum_loop(tail, acc + head)
+  }
+}
+
+pub fn sum(list: List(Int)) -> Int {
+  sum_loop(list, 0)
+}
+```
+
+## Deprecating functions
+
+Mark a function as deprecated with `@deprecated`:
+
+```gleam
+@deprecated("Use new_function instead")
+pub fn old_function(x: Int) -> Int {
+  x
+}
+```
+
+The compiler emits a warning at every call site.
